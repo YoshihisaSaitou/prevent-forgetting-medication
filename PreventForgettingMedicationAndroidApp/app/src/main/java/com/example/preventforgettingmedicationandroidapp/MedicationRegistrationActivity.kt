@@ -23,6 +23,21 @@ class MedicationRegistrationActivity : AppCompatActivity() {
         val evening = findViewById<CheckBox>(R.id.slot_evening)
         val saveButton = findViewById<Button>(R.id.save_button)
 
+        val medId = intent.getIntExtra("MED_ID", -1)
+        val existingMedication = if (medId != -1) dao.getById(medId) else null
+
+        existingMedication?.let { medication ->
+            nameInput.setText(medication.name)
+            when (medication.mealTiming) {
+                MealTiming.BEFORE_MEAL -> beforeMeal.isChecked = true
+                MealTiming.AFTER_MEAL -> afterMeal.isChecked = true
+                else -> {}
+            }
+            morning.isChecked = medication.timing.contains(IntakeSlot.MORNING)
+            noon.isChecked = medication.timing.contains(IntakeSlot.NOON)
+            evening.isChecked = medication.timing.contains(IntakeSlot.EVENING)
+        }
+
         saveButton.setOnClickListener {
             val name = nameInput.text.toString().trim()
             val mealTiming = when {
@@ -44,8 +59,18 @@ class MedicationRegistrationActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            val medication = Medication(name = name, mealTiming = mealTiming, timing = slots)
-            dao.insert(medication)
+            val medication = Medication(
+                id = if (medId != -1) medId else 0,
+                name = name,
+                mealTiming = mealTiming,
+                timing = slots
+            )
+
+            if (medId != -1) {
+                dao.update(medication)
+            } else {
+                dao.insert(medication)
+            }
             Toast.makeText(
                 this,
                 getString(R.string.medication_saved),
