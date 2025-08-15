@@ -36,13 +36,21 @@ class MedicationRegistrationActivity : AppCompatActivity() {
             if (evening.isChecked) slots.add(IntakeSlot.EVENING)
 
             if (name.isEmpty() || slots.isEmpty()) {
-                Toast.makeText(this, "Please enter name and select intake times", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this,
+                    getString(R.string.error_enter_name_select_times),
+                    Toast.LENGTH_SHORT
+                ).show()
                 return@setOnClickListener
             }
 
             val medication = Medication(name = name, mealTiming = mealTiming, timing = slots)
             dao.insert(medication)
-            Toast.makeText(this, "Medication saved", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                this,
+                getString(R.string.medication_saved),
+                Toast.LENGTH_SHORT
+            ).show()
             finish()
         }
     }

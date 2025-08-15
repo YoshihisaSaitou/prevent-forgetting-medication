@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">PreventForgettingMedicationAndroidApp</string>
+    <string name="hello_world">こんにちは世界！</string>
+    <string name="add_medication">お薬の登録</string>
+    <string name="medication_name_hint">薬の名前</string>
+    <string name="before_meal">食前</string>
+    <string name="after_meal">食後</string>
+    <string name="morning">朝</string>
+    <string name="noon">昼</string>
+    <string name="evening">夜</string>
+    <string name="save">保存</string>
+    <string name="error_enter_name_select_times">名前を入力し、服用時間を選択してください</string>
+    <string name="medication_saved">お薬を保存しました</string>
+</resources>

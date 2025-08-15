@@ -13,7 +13,7 @@
             android:id="@+id/medication_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Medication name" />
+            android:hint="@string/medication_name_hint" />
 
         <RadioGroup
             android:id="@+id/meal_timing_group"
@@ -25,37 +25,37 @@
                 android:id="@+id/before_meal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Before Meal" />
+                android:text="@string/before_meal" />
 
             <RadioButton
                 android:id="@+id/after_meal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="After Meal" />
+                android:text="@string/after_meal" />
         </RadioGroup>
 
         <CheckBox
             android:id="@+id/slot_morning"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Morning" />
+            android:text="@string/morning" />
 
         <CheckBox
             android:id="@+id/slot_noon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Noon" />
+            android:text="@string/noon" />
 
         <CheckBox
             android:id="@+id/slot_evening"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Evening" />
+            android:text="@string/evening" />
 
         <Button
             android:id="@+id/save_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Save" />
+            android:text="@string/save" />
     </LinearLayout>
 </ScrollView>
