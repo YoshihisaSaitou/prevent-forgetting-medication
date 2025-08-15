@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">PreventForgettingMedicationAndroidApp</string>
     <string name="hello_world">こんにちは世界！</string>
+    <string name="medication_list">お薬一覧</string>
     <string name="add_medication">お薬の登録</string>
     <string name="medication_name_hint">薬の名前</string>
     <string name="before_meal">食前</string>

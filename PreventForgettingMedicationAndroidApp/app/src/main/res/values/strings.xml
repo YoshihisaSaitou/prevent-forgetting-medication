@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">PreventForgettingMedicationAndroidApp</string>
     <string name="hello_world">Hello World!</string>
+    <string name="medication_list">Medications</string>
     <string name="add_medication">Add Medication</string>
     <string name="medication_name_hint">Medication name</string>
     <string name="before_meal">Before Meal</string>
