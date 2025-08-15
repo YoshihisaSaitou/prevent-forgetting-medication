@@ -13,6 +13,7 @@ import androidx.core.view.WindowInsetsCompat
 class MainActivity : AppCompatActivity() {
     private val dao by lazy { MedicationDatabase.getInstance(this).medicationDao() }
     private lateinit var adapter: ArrayAdapter<String>
+    private var medications: List<Medication> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,7 +25,14 @@ class MainActivity : AppCompatActivity() {
             insets
         }
         adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, mutableListOf())
-        findViewById<ListView>(R.id.medication_list).adapter = adapter
+        val listView = findViewById<ListView>(R.id.medication_list)
+        listView.adapter = adapter
+        listView.setOnItemClickListener { _, _, position, _ ->
+            val medication = medications[position]
+            val intent = Intent(this, MedicationRegistrationActivity::class.java)
+            intent.putExtra("MED_ID", medication.id)
+            startActivity(intent)
+        }
 
         findViewById<Button>(R.id.add_medication_button).setOnClickListener {
             startActivity(Intent(this, MedicationRegistrationActivity::class.java))
@@ -33,7 +41,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        val medications = dao.getAll()
+        medications = dao.getAll()
         adapter.clear()
         adapter.addAll(medications.map { it.name })
         adapter.notifyDataSetChanged()
