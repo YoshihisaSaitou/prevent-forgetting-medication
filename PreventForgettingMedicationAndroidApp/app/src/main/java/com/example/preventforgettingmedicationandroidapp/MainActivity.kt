@@ -1,9 +1,10 @@
 package com.example.preventforgettingmedicationandroidapp
 
+import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Button
 import android.widget.ArrayAdapter
+import android.widget.Button
 import android.widget.ListView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -33,6 +34,18 @@ class MainActivity : AppCompatActivity() {
             intent.putExtra("MED_ID", medication.id)
             startActivity(intent)
         }
+        listView.setOnItemLongClickListener { _, _, position, _ ->
+            val medication = medications[position]
+            AlertDialog.Builder(this)
+                .setMessage("Delete this medication?")
+                .setPositiveButton("Yes") { _, _ ->
+                    dao.delete(medication)
+                    loadMedications()
+                }
+                .setNegativeButton("No", null)
+                .show()
+            true
+        }
 
         findViewById<Button>(R.id.add_medication_button).setOnClickListener {
             startActivity(Intent(this, MedicationRegistrationActivity::class.java))
@@ -41,6 +54,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        loadMedications()
+    }
+
+    private fun loadMedications() {
         medications = dao.getAll()
         adapter.clear()
         adapter.addAll(medications.map { it.name })

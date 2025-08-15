@@ -1,6 +1,7 @@
 package com.example.preventforgettingmedicationandroidapp
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
@@ -18,4 +19,7 @@ interface MedicationDao {
 
     @Query("SELECT * FROM medications WHERE id = :id")
     fun getById(id: Int): Medication?
+
+    @Delete
+    fun delete(medication: Medication)
 }
