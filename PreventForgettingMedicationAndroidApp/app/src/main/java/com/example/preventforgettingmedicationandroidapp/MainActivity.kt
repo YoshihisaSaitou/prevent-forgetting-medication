@@ -10,6 +10,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
     private val dao by lazy { MedicationDatabase.getInstance(this).medicationDao() }
@@ -39,8 +41,10 @@ class MainActivity : AppCompatActivity() {
             AlertDialog.Builder(this)
                 .setMessage("Delete this medication?")
                 .setPositiveButton("Yes") { _, _ ->
-                    dao.delete(medication)
-                    loadMedications()
+                    lifecycleScope.launch {
+                        dao.delete(medication)
+                        loadMedications()
+                    }
                 }
                 .setNegativeButton("No", null)
                 .show()
@@ -54,10 +58,12 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        loadMedications()
+        lifecycleScope.launch {
+            loadMedications()
+        }
     }
 
-    private fun loadMedications() {
+    private suspend fun loadMedications() {
         medications = dao.getAll()
         adapter.clear()
         adapter.addAll(medications.map { it.name })

@@ -9,17 +9,17 @@ import androidx.room.Update
 @Dao
 interface MedicationDao {
     @Insert
-    fun insert(medication: Medication)
+    suspend fun insert(medication: Medication)
 
     @Update
-    fun update(medication: Medication)
+    suspend fun update(medication: Medication)
 
     @Query("SELECT * FROM medications")
-    fun getAll(): List<Medication>
+    suspend fun getAll(): List<Medication>
 
     @Query("SELECT * FROM medications WHERE id = :id")
-    fun getById(id: Int): Medication?
+    suspend fun getById(id: Int): Medication?
 
     @Delete
-    fun delete(medication: Medication)
+    suspend fun delete(medication: Medication)
 }
