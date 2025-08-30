@@ -31,6 +31,8 @@ class MainActivity : AppCompatActivity() {
         adapter = MedicationAdapter(this, mutableListOf())
         val listView = findViewById<ListView>(R.id.medication_list)
         listView.adapter = adapter
+        // Set empty view for the list
+        listView.emptyView = findViewById(R.id.empty_message)
         listView.setOnItemClickListener { _, _, position, _ ->
             val medication = medications[position]
             val intent = Intent(this, MedicationRegistrationActivity::class.java)
@@ -69,17 +71,5 @@ class MainActivity : AppCompatActivity() {
         adapter.clear()
         adapter.addAll(medications)
         adapter.notifyDataSetChanged()
-        
-        // 空の状態の表示を制御
-        val emptyMessage = findViewById<TextView>(R.id.empty_message)
-        val listView = findViewById<ListView>(R.id.medication_list)
-        
-        if (medications.isEmpty()) {
-            emptyMessage.visibility = View.VISIBLE
-            listView.visibility = View.GONE
-        } else {
-            emptyMessage.visibility = View.GONE
-            listView.visibility = View.VISIBLE
-        }
     }
 }
