@@ -3,9 +3,10 @@ package com.example.preventforgettingmedicationandroidapp
 import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
-import android.widget.ArrayAdapter
+import android.view.View
 import android.widget.Button
 import android.widget.ListView
+import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -15,7 +16,7 @@ import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
     private val dao by lazy { MedicationDatabase.getInstance(this).medicationDao() }
-    private lateinit var adapter: ArrayAdapter<String>
+    private lateinit var adapter: MedicationAdapter
     private var medications: List<Medication> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,7 +28,7 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
-        adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, mutableListOf())
+        adapter = MedicationAdapter(this, mutableListOf())
         val listView = findViewById<ListView>(R.id.medication_list)
         listView.adapter = adapter
         listView.setOnItemClickListener { _, _, position, _ ->
@@ -66,7 +67,19 @@ class MainActivity : AppCompatActivity() {
     private suspend fun loadMedications() {
         medications = dao.getAll()
         adapter.clear()
-        adapter.addAll(medications.map { it.name })
+        adapter.addAll(medications)
         adapter.notifyDataSetChanged()
+        
+        // 空の状態の表示を制御
+        val emptyMessage = findViewById<TextView>(R.id.empty_message)
+        val listView = findViewById<ListView>(R.id.medication_list)
+        
+        if (medications.isEmpty()) {
+            emptyMessage.visibility = View.VISIBLE
+            listView.visibility = View.GONE
+        } else {
+            emptyMessage.visibility = View.GONE
+            listView.visibility = View.VISIBLE
+        }
     }
 }

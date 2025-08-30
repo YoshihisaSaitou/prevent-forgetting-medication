@@ -12,4 +12,5 @@
     <string name="save">保存</string>
     <string name="error_enter_name_select_times">名前を入力し、服用時間を選択してください</string>
     <string name="medication_saved">お薬を保存しました</string>
+    <string name="no_medications">登録されたお薬がありません</string>
 </resources>

@@ -12,4 +12,5 @@
     <string name="save">Save</string>
     <string name="error_enter_name_select_times">Please enter name and select intake times</string>
     <string name="medication_saved">Medication saved</string>
+    <string name="no_medications">No medications registered yet</string>
 </resources>
