@@ -22,4 +22,11 @@ interface MedicationDao {
 
     @Delete
     suspend fun delete(medication: Medication)
+
+    @Query("SELECT COUNT(*) FROM medications")
+    fun countAll(): Int
+
+    // Synchronous accessor for schedulers/receivers
+    @Query("SELECT * FROM medications")
+    fun getAllSync(): List<Medication>
 }

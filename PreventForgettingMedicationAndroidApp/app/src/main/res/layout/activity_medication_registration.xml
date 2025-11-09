@@ -1,61 +1,101 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+    <ScrollView
+        android:id="@+id/registration_scroll"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/footer_container">
 
-        <EditText
-            android:id="@+id/medication_name"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/medication_name_hint" />
+            android:orientation="vertical"
+            android:padding="16dp">
 
-        <RadioGroup
-            android:id="@+id/meal_timing_group"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            <EditText
+                android:id="@+id/medication_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/medication_name_hint" />
 
-            <RadioButton
-                android:id="@+id/before_meal"
+            <RadioGroup
+                android:id="@+id/meal_timing_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <RadioButton
+                    android:id="@+id/before_meal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/before_meal" />
+
+                <RadioButton
+                    android:id="@+id/after_meal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/after_meal" />
+            </RadioGroup>
+
+            <CheckBox
+                android:id="@+id/slot_morning"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/before_meal" />
+                android:text="@string/morning" />
 
-            <RadioButton
-                android:id="@+id/after_meal"
+            <CheckBox
+                android:id="@+id/slot_noon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/after_meal" />
-        </RadioGroup>
+                android:text="@string/noon" />
 
-        <CheckBox
-            android:id="@+id/slot_morning"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/morning" />
+            <CheckBox
+                android:id="@+id/slot_evening"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/evening" />
 
-        <CheckBox
-            android:id="@+id/slot_noon"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/noon" />
+            <TextView
+                android:id="@+id/memo_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/memo" />
 
-        <CheckBox
-            android:id="@+id/slot_evening"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/evening" />
+            <EditText
+                android:id="@+id/memo_edit"
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:gravity="top|start"
+                android:inputType="textMultiLine"
+                android:hint="@string/memo_hint" />
 
         <Button
             android:id="@+id/save_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/save" />
+        </LinearLayout>
+    </ScrollView>
+
+    <LinearLayout
+        android:id="@+id/footer_container"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <include layout="@layout/include_footer_menu" />
     </LinearLayout>
-</ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

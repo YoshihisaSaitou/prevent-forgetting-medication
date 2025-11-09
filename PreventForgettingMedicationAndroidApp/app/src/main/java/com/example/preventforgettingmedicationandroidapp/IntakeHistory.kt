@@ -3,11 +3,11 @@ package com.example.preventforgettingmedicationandroidapp
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "medications")
-data class Medication(
+@Entity(tableName = "intake_history")
+data class IntakeHistory(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val name: String,
-    val mealTiming: MealTiming?,
-    val timing: Set<IntakeSlot>,
-    val memo: String?
+    val medicationId: Int,
+    val medicationName: String,
+    val takenAt: Long
 )
+

@@ -6,10 +6,11 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
-@Database(entities = [Medication::class], version = 1)
+@Database(entities = [Medication::class, IntakeHistory::class], version = 3)
 @TypeConverters(Converters::class)
 abstract class MedicationDatabase : RoomDatabase() {
     abstract fun medicationDao(): MedicationDao
+    abstract fun intakeHistoryDao(): IntakeHistoryDao
 
     companion object {
         @Volatile
@@ -22,6 +23,7 @@ abstract class MedicationDatabase : RoomDatabase() {
                     MedicationDatabase::class.java,
                     "medications.db"
                 ).allowMainThreadQueries()
+                    .fallbackToDestructiveMigration()
                     .build()
                     .also { INSTANCE = it }
             }

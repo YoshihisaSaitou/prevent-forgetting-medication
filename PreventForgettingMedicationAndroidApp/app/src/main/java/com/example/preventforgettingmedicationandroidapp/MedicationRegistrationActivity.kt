@@ -1,12 +1,16 @@
 package com.example.preventforgettingmedicationandroidapp
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.RadioButton
 import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 
@@ -15,7 +19,13 @@ class MedicationRegistrationActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContentView(R.layout.activity_medication_registration)
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            insets
+        }
 
         val nameInput = findViewById<EditText>(R.id.medication_name)
         val beforeMeal = findViewById<RadioButton>(R.id.before_meal)
@@ -24,6 +34,7 @@ class MedicationRegistrationActivity : AppCompatActivity() {
         val noon = findViewById<CheckBox>(R.id.slot_noon)
         val evening = findViewById<CheckBox>(R.id.slot_evening)
         val saveButton = findViewById<Button>(R.id.save_button)
+        val memoEdit = findViewById<EditText>(R.id.memo_edit)
 
         val medId = intent.getIntExtra("MED_ID", -1)
         if (medId != -1) {
@@ -39,6 +50,7 @@ class MedicationRegistrationActivity : AppCompatActivity() {
                     morning.isChecked = medication.timing.contains(IntakeSlot.MORNING)
                     noon.isChecked = medication.timing.contains(IntakeSlot.NOON)
                     evening.isChecked = medication.timing.contains(IntakeSlot.EVENING)
+                    memoEdit.setText(medication.memo ?: "")
                 }
             }
         }
@@ -69,7 +81,8 @@ class MedicationRegistrationActivity : AppCompatActivity() {
                 id = if (medId != -1) medId else 0,
                 name = name,
                 mealTiming = mealTiming,
-                timing = slots
+                timing = slots,
+                memo = memoEdit.text?.toString()?.takeIf { it.isNotBlank() }
             )
 
             lifecycleScope.launch {
@@ -87,6 +100,20 @@ class MedicationRegistrationActivity : AppCompatActivity() {
                     finish()
                 }
             }
+        }
+
+        // Footer menu
+        findViewById<Button>(R.id.footer_list).setOnClickListener {
+            startActivity(Intent(this, MainActivity::class.java))
+        }
+        findViewById<Button>(R.id.footer_add).setOnClickListener {
+            // already here
+        }
+        findViewById<Button>(R.id.footer_history).setOnClickListener {
+            startActivity(Intent(this, HistoryActivity::class.java))
+        }
+        findViewById<Button>(R.id.footer_settings).setOnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
         }
     }
 }

@@ -5,7 +5,14 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
+import android.widget.Button
 import android.widget.TextView
+import android.os.Handler
+import android.os.Looper
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MedicationAdapter(
     context: Context,
@@ -14,18 +21,19 @@ class MedicationAdapter(
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
         val view = convertView ?: LayoutInflater.from(context)
-            .inflate(android.R.layout.simple_list_item_2, parent, false)
+            .inflate(R.layout.item_medication, parent, false)
 
         val medication = getItem(position)
-        medication?.let {
-            val nameTextView = view.findViewById<TextView>(android.R.id.text1)
-            val detailsTextView = view.findViewById<TextView>(android.R.id.text2)
+        medication?.let { med ->
+            val nameTextView = view.findViewById<TextView>(R.id.med_name)
+            val detailsTextView = view.findViewById<TextView>(R.id.med_details)
+            val takeButton = view.findViewById<Button>(R.id.btn_take)
 
-            nameTextView.text = it.name
+            nameTextView.text = med.name
             
             val details = buildString {
                 // 食事タイミング
-                when (it.mealTiming) {
+                when (med.mealTiming) {
                     MealTiming.BEFORE_MEAL -> append("食前")
                     MealTiming.AFTER_MEAL -> append("食後")
                     null -> append("食事タイミング未設定")
@@ -34,11 +42,20 @@ class MedicationAdapter(
                 append(" | ")
                 
                 // 服用時間帯
-                val timeSlots = it.timing.map { slot ->
+                val timeSlots = med.timing.map { slot ->
                     when (slot) {
-                        IntakeSlot.MORNING -> "朝"
-                        IntakeSlot.NOON -> "昼"
-                        IntakeSlot.EVENING -> "夕"
+                        IntakeSlot.MORNING -> {
+                            val t = TimePreferences.formatMinutes(TimePreferences.getMorningMinutes(context))
+                            "朝 $t"
+                        }
+                        IntakeSlot.NOON -> {
+                            val t = TimePreferences.formatMinutes(TimePreferences.getNoonMinutes(context))
+                            "昼 $t"
+                        }
+                        IntakeSlot.EVENING -> {
+                            val t = TimePreferences.formatMinutes(TimePreferences.getEveningMinutes(context))
+                            "夕 $t"
+                        }
                     }
                 }
                 
@@ -50,6 +67,38 @@ class MedicationAdapter(
             }
             
             detailsTextView.text = details
+
+            // Apply disabled state based on last taken time
+            val enabled = TakenStateStore.isEnabled(context, med.id)
+            takeButton.isEnabled = enabled
+            takeButton.alpha = if (enabled) 1f else 0.5f
+
+            takeButton.setOnClickListener {
+                val dao = MedicationDatabase.getInstance(context).intakeHistoryDao()
+                val entry = IntakeHistory(
+                    medicationId = med.id,
+                    medicationName = med.name,
+                    takenAt = System.currentTimeMillis()
+                )
+                // Immediately disable for 5 minutes in UI and persist state
+                TakenStateStore.setDisabledForFiveMinutes(context, med.id)
+                takeButton.isEnabled = false
+                takeButton.alpha = 0.5f
+                CoroutineScope(Dispatchers.IO).launch {
+                    dao.insert(entry)
+                    withContext(Dispatchers.Main) {
+                        android.widget.Toast.makeText(
+                            context,
+                            context.getString(R.string.taken_recorded),
+                            android.widget.Toast.LENGTH_SHORT
+                        ).show()
+                        // Schedule a refresh after 5 minutes to re-enable if this row is visible
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            notifyDataSetChanged()
+                        }, 5 * 60 * 1000L)
+                    }
+                }
+            }
         }
 
         return view

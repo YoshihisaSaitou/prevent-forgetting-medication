@@ -1,7 +1,10 @@
 package com.example.preventforgettingmedicationandroidapp
 
+import android.Manifest
 import android.app.AlertDialog
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
@@ -9,6 +12,8 @@ import android.widget.ListView
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
@@ -54,9 +59,25 @@ class MainActivity : AppCompatActivity() {
             true
         }
 
-        findViewById<Button>(R.id.add_medication_button).setOnClickListener {
+        // Footer menu actions
+        findViewById<Button>(R.id.footer_add).setOnClickListener {
             startActivity(Intent(this, MedicationRegistrationActivity::class.java))
         }
+        findViewById<Button>(R.id.footer_list).setOnClickListener {
+            // already on list; no-op
+        }
+        findViewById<Button>(R.id.footer_history).setOnClickListener {
+            startActivity(Intent(this, HistoryActivity::class.java))
+        }
+        findViewById<Button>(R.id.footer_settings).setOnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
+        }
+
+        // Request notification permission on Android 13+
+        requestNotificationPermissionIfNeeded()
+
+        // Ensure alarms are scheduled based on current preferences
+        AlarmScheduler.scheduleAll(this)
     }
 
     override fun onResume() {
@@ -71,5 +92,26 @@ class MainActivity : AppCompatActivity() {
         adapter.clear()
         adapter.addAll(medications)
         adapter.notifyDataSetChanged()
+        if (medications.isEmpty()) {
+            AlarmScheduler.cancelAll(this)
+        } else {
+            AlarmScheduler.scheduleAll(this)
+        }
+    }
+
+    private fun requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= 33) {
+            val granted = ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+            if (!granted) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    100
+                )
+            }
+        }
     }
 }

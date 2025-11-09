@@ -13,4 +13,20 @@
     <string name="error_enter_name_select_times">名前を入力し、服用時間を選択してください</string>
     <string name="medication_saved">お薬を保存しました</string>
     <string name="no_medications">登録されたお薬がありません</string>
+    <string name="settings">設定</string>
+    <string name="settings_title">服用時刻の設定</string>
+    <string name="morning_time">朝の時刻</string>
+    <string name="noon_time">昼の時刻</string>
+    <string name="evening_time">夜の時刻</string>
+    <string name="settings_saved">保存しました</string>
+    <string name="notification_title">お薬リマインダー</string>
+    <string name="notification_message">%1$sに薬を飲む時間です</string>
+    <string name="notification_channel_name">お薬リマインダー</string>
+    <string name="notification_channel_desc">設定した服用時刻に通知します</string>
+    <string name="take_button">飲んだ</string>
+    <string name="taken_recorded">飲んだ記録を保存しました</string>
+    <string name="history">飲んだ履歴</string>
+    <string name="history_empty">飲んだ履歴はまだありません</string>
+    <string name="memo">メモ</string>
+    <string name="memo_hint">注意点や飲み方など</string>
 </resources>
