@@ -92,6 +92,7 @@ class MedicationRegistrationActivity : AppCompatActivity() {
                     dao.insert(medication)
                 }
                 runOnUiThread {
+                    WidgetUtils.refreshMedicationWidgets(this@MedicationRegistrationActivity)
                     Toast.makeText(
                         this@MedicationRegistrationActivity,
                         getString(R.string.medication_saved),

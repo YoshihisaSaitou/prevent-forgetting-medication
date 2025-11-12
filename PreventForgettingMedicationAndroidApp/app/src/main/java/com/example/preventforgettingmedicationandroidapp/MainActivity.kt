@@ -92,6 +92,7 @@ class MainActivity : AppCompatActivity() {
         adapter.clear()
         adapter.addAll(medications)
         adapter.notifyDataSetChanged()
+        WidgetUtils.refreshMedicationWidgets(this)
         if (medications.isEmpty()) {
             AlarmScheduler.cancelAll(this)
         } else {

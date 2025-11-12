@@ -3,7 +3,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="12dp">
+    android:padding="8dp"
+    android:background="@android:color/transparent">
 
     <LinearLayout
         android:layout_width="0dp"
@@ -12,38 +13,26 @@
         android:orientation="vertical">
 
         <TextView
-            android:id="@+id/med_name"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textStyle="bold"
-            android:textSize="16sp" />
-
-        <TextView
-            android:id="@+id/med_details"
+            android:id="@+id/widget_item_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="14sp"
-            android:textColor="@android:color/darker_gray" />
+            android:textStyle="bold"
+            android:textColor="@android:color/white" />
+
+        <TextView
+            android:id="@+id/widget_item_details"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:textColor="@android:color/white" />
     </LinearLayout>
 
     <Button
-        android:id="@+id/btn_take"
+        android:id="@+id/widget_btn_take"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/take_button" />
-
-    <Button
-        android:id="@+id/btn_edit"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:text="@string/edit" />
-
-    <Button
-        android:id="@+id/btn_delete"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:text="@string/delete" />
+        android:text="@string/take_button"
+        android:textColor="@android:color/white" />
 
 </LinearLayout>

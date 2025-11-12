@@ -1,6 +1,8 @@
 package com.example.preventforgettingmedicationandroidapp
 
+import android.app.AlertDialog
 import android.content.Context
+import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -28,6 +30,8 @@ class MedicationAdapter(
             val nameTextView = view.findViewById<TextView>(R.id.med_name)
             val detailsTextView = view.findViewById<TextView>(R.id.med_details)
             val takeButton = view.findViewById<Button>(R.id.btn_take)
+            val editButton = view.findViewById<Button>(R.id.btn_edit)
+            val deleteButton = view.findViewById<Button>(R.id.btn_delete)
 
             nameTextView.text = med.name
             
@@ -92,12 +96,38 @@ class MedicationAdapter(
                             context.getString(R.string.taken_recorded),
                             android.widget.Toast.LENGTH_SHORT
                         ).show()
+                        WidgetUtils.refreshMedicationWidgets(context)
                         // Schedule a refresh after 5 minutes to re-enable if this row is visible
                         Handler(Looper.getMainLooper()).postDelayed({
                             notifyDataSetChanged()
+                            WidgetUtils.refreshMedicationWidgets(context)
                         }, 5 * 60 * 1000L)
                     }
                 }
+            }
+
+            editButton.setOnClickListener {
+                val intent = Intent(context, MedicationRegistrationActivity::class.java)
+                intent.putExtra("MED_ID", med.id)
+                context.startActivity(intent)
+            }
+
+            deleteButton.setOnClickListener {
+                AlertDialog.Builder(context)
+                    .setMessage(context.getString(R.string.confirm_delete))
+                    .setPositiveButton(android.R.string.ok) { _, _ ->
+                        val medDao = MedicationDatabase.getInstance(context).medicationDao()
+                        CoroutineScope(Dispatchers.IO).launch {
+                            medDao.delete(med)
+                            withContext(Dispatchers.Main) {
+                                remove(med)
+                                notifyDataSetChanged()
+                                WidgetUtils.refreshMedicationWidgets(context)
+                            }
+                        }
+                    }
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show()
             }
         }
 
