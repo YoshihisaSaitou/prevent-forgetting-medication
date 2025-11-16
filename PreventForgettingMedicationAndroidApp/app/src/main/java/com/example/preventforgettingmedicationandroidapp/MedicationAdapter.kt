@@ -46,18 +46,23 @@ class MedicationAdapter(
                 append(" | ")
                 
                 // 服用時間帯
+                fun minutesFor(slot: IntakeSlot): Int = when (slot) {
+                    IntakeSlot.MORNING -> med.morningMinutes ?: TimePreferences.getMorningMinutes(context)
+                    IntakeSlot.NOON -> med.noonMinutes ?: TimePreferences.getNoonMinutes(context)
+                    IntakeSlot.EVENING -> med.eveningMinutes ?: TimePreferences.getEveningMinutes(context)
+                }
                 val timeSlots = med.timing.map { slot ->
                     when (slot) {
                         IntakeSlot.MORNING -> {
-                            val t = TimePreferences.formatMinutes(TimePreferences.getMorningMinutes(context))
+                            val t = TimePreferences.formatMinutes(minutesFor(slot))
                             "朝 $t"
                         }
                         IntakeSlot.NOON -> {
-                            val t = TimePreferences.formatMinutes(TimePreferences.getNoonMinutes(context))
+                            val t = TimePreferences.formatMinutes(minutesFor(slot))
                             "昼 $t"
                         }
                         IntakeSlot.EVENING -> {
-                            val t = TimePreferences.formatMinutes(TimePreferences.getEveningMinutes(context))
+                            val t = TimePreferences.formatMinutes(minutesFor(slot))
                             "夕 $t"
                         }
                     }
@@ -97,10 +102,12 @@ class MedicationAdapter(
                             android.widget.Toast.LENGTH_SHORT
                         ).show()
                         WidgetUtils.refreshMedicationWidgets(context)
+                        WidgetUtils.refreshHistoryWidgets(context)
                         // Schedule a refresh after 5 minutes to re-enable if this row is visible
                         Handler(Looper.getMainLooper()).postDelayed({
                             notifyDataSetChanged()
                             WidgetUtils.refreshMedicationWidgets(context)
+                            WidgetUtils.refreshHistoryWidgets(context)
                         }, 5 * 60 * 1000L)
                     }
                 }

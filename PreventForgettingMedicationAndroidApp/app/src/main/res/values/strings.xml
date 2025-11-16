@@ -33,4 +33,7 @@
     <string name="notification_message">Time to take your %1$s medicine</string>
     <string name="notification_channel_name">Medication reminders</string>
     <string name="notification_channel_desc">Notifications for scheduled medication times</string>
+    <string name="use_app_times">Use app time settings</string>
+    <string name="use_med_times">Set times per medication</string>
+    <string name="select_time">Set time</string>
 </resources>

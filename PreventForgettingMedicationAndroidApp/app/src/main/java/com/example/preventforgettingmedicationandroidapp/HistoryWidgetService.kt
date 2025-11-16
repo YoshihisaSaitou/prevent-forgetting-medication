@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
 import android.widget.RemoteViewsService
+import android.os.Binder
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -17,8 +18,13 @@ class HistoryWidgetService : RemoteViewsService() {
         override fun onCreate() {}
 
         override fun onDataSetChanged() {
-            val dao = MedicationDatabase.getInstance(context).intakeHistoryDao()
-            items = try { dao.getRecentSync(50) } catch (_: Exception) { emptyList() }
+            val token = Binder.clearCallingIdentity()
+            try {
+                val dao = MedicationDatabase.getInstance(context).intakeHistoryDao()
+                items = try { dao.getRecentSync(50) } catch (_: Exception) { emptyList() }
+            } finally {
+                Binder.restoreCallingIdentity(token)
+            }
         }
 
         override fun onDestroy() {
@@ -35,6 +41,9 @@ class HistoryWidgetService : RemoteViewsService() {
             val sdf = SimpleDateFormat("yyyy/MM/dd HH:mm", Locale.getDefault())
             val time = sdf.format(Date(entry.takenAt))
             rv.setTextViewText(R.id.widget_item_time, time)
+            // Make the whole row clickable to open HistoryActivity via template
+            val fillIn = Intent()
+            rv.setOnClickFillInIntent(R.id.history_item_root, fillIn)
             return rv
         }
 
@@ -44,4 +53,3 @@ class HistoryWidgetService : RemoteViewsService() {
         override fun hasStableIds(): Boolean = true
     }
 }
-

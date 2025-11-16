@@ -32,15 +32,18 @@ class MedicationWidgetService : RemoteViewsService() {
             rv.setTextViewText(R.id.widget_item_name, med.name)
 
             // Build time slot details like "朝 07:00, 昼 12:00, 夜 19:00"
+            fun minutesFor(slot: IntakeSlot): Int = when (slot) {
+                IntakeSlot.MORNING -> med.morningMinutes ?: TimePreferences.getMorningMinutes(context)
+                IntakeSlot.NOON -> med.noonMinutes ?: TimePreferences.getNoonMinutes(context)
+                IntakeSlot.EVENING -> med.eveningMinutes ?: TimePreferences.getEveningMinutes(context)
+            }
             val details = med.timing.map { slot ->
-                when (slot) {
-                    IntakeSlot.MORNING ->
-                        context.getString(R.string.morning) + " " + TimePreferences.formatMinutes(TimePreferences.getMorningMinutes(context))
-                    IntakeSlot.NOON ->
-                        context.getString(R.string.noon) + " " + TimePreferences.formatMinutes(TimePreferences.getNoonMinutes(context))
-                    IntakeSlot.EVENING ->
-                        context.getString(R.string.evening) + " " + TimePreferences.formatMinutes(TimePreferences.getEveningMinutes(context))
+                val label = when (slot) {
+                    IntakeSlot.MORNING -> context.getString(R.string.morning)
+                    IntakeSlot.NOON -> context.getString(R.string.noon)
+                    IntakeSlot.EVENING -> context.getString(R.string.evening)
                 }
+                "$label ${TimePreferences.formatMinutes(minutesFor(slot))}"
             }.joinToString(", ")
             rv.setTextViewText(R.id.widget_item_details, if (details.isNotEmpty()) details else "")
 

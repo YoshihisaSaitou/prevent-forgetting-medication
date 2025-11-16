@@ -2,10 +2,14 @@ package com.example.preventforgettingmedicationandroidapp
 
 import android.content.Intent
 import android.os.Bundle
+import android.app.TimePickerDialog
+import android.view.View
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.RadioButton
+import android.widget.RadioGroup
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -35,6 +39,52 @@ class MedicationRegistrationActivity : AppCompatActivity() {
         val evening = findViewById<CheckBox>(R.id.slot_evening)
         val saveButton = findViewById<Button>(R.id.save_button)
         val memoEdit = findViewById<EditText>(R.id.memo_edit)
+        val timeModeGroup = findViewById<RadioGroup>(R.id.time_mode_group)
+        val useAppTimes = findViewById<RadioButton>(R.id.use_app_times)
+        val useMedTimes = findViewById<RadioButton>(R.id.use_med_times)
+        val perMedContainer = findViewById<View>(R.id.per_med_time_container)
+        val tvMorning = findViewById<TextView>(R.id.med_time_morning)
+        val tvNoon = findViewById<TextView>(R.id.med_time_noon)
+        val tvEvening = findViewById<TextView>(R.id.med_time_evening)
+        val btnMorning = findViewById<Button>(R.id.btn_time_morning)
+        val btnNoon = findViewById<Button>(R.id.btn_time_noon)
+        val btnEvening = findViewById<Button>(R.id.btn_time_evening)
+
+        // Default per-med minutes seeded from app settings
+        var perMorning = TimePreferences.getMorningMinutes(this)
+        var perNoon = TimePreferences.getNoonMinutes(this)
+        var perEvening = TimePreferences.getEveningMinutes(this)
+
+        fun updateTimeTexts() {
+            tvMorning.text = TimePreferences.formatMinutes(perMorning)
+            tvNoon.text = TimePreferences.formatMinutes(perNoon)
+            tvEvening.text = TimePreferences.formatMinutes(perEvening)
+        }
+        updateTimeTexts()
+
+        fun pickTime(initMinutes: Int, onPicked: (Int) -> Unit) {
+            val h = initMinutes / 60
+            val m = initMinutes % 60
+            TimePickerDialog(this, { _, hourOfDay, minute ->
+                onPicked(hourOfDay * 60 + minute)
+                updateTimeTexts()
+            }, h, m, true).show()
+        }
+        tvMorning.setOnClickListener { pickTime(perMorning) { perMorning = it } }
+        tvNoon.setOnClickListener { pickTime(perNoon) { perNoon = it } }
+        tvEvening.setOnClickListener { pickTime(perEvening) { perEvening = it } }
+        btnMorning.setOnClickListener { pickTime(perMorning) { perMorning = it } }
+        btnNoon.setOnClickListener { pickTime(perNoon) { perNoon = it } }
+        btnEvening.setOnClickListener { pickTime(perEvening) { perEvening = it } }
+
+        fun applyModeUI(useApp: Boolean) {
+            perMedContainer.visibility = if (useApp) View.GONE else View.VISIBLE
+        }
+        useAppTimes.isChecked = true
+        applyModeUI(true)
+        timeModeGroup.setOnCheckedChangeListener { _, _ ->
+            applyModeUI(useAppTimes.isChecked)
+        }
 
         val medId = intent.getIntExtra("MED_ID", -1)
         if (medId != -1) {
@@ -51,6 +101,15 @@ class MedicationRegistrationActivity : AppCompatActivity() {
                     noon.isChecked = medication.timing.contains(IntakeSlot.NOON)
                     evening.isChecked = medication.timing.contains(IntakeSlot.EVENING)
                     memoEdit.setText(medication.memo ?: "")
+
+                    // Time mode and overrides
+                    useAppTimes.isChecked = medication.useAppTimes
+                    useMedTimes.isChecked = !medication.useAppTimes
+                    applyModeUI(medication.useAppTimes)
+                    medication.morningMinutes?.let { perMorning = it }
+                    medication.noonMinutes?.let { perNoon = it }
+                    medication.eveningMinutes?.let { perEvening = it }
+                    updateTimeTexts()
                 }
             }
         }
@@ -82,7 +141,11 @@ class MedicationRegistrationActivity : AppCompatActivity() {
                 name = name,
                 mealTiming = mealTiming,
                 timing = slots,
-                memo = memoEdit.text?.toString()?.takeIf { it.isNotBlank() }
+                memo = memoEdit.text?.toString()?.takeIf { it.isNotBlank() },
+                useAppTimes = useAppTimes.isChecked,
+                morningMinutes = if (useMedTimes.isChecked) perMorning else null,
+                noonMinutes = if (useMedTimes.isChecked) perNoon else null,
+                eveningMinutes = if (useMedTimes.isChecked) perEvening else null
             )
 
             lifecycleScope.launch {

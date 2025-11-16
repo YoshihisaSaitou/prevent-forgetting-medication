@@ -7,6 +7,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Bundle
 import android.widget.RemoteViews
 import android.widget.Toast
 import kotlinx.coroutines.CoroutineScope
@@ -15,6 +16,23 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class MedicationWidgetProvider : AppWidgetProvider() {
+
+    override fun onEnabled(context: Context) {
+        super.onEnabled(context)
+        // Force refresh when the first instance is added
+        try { WidgetUtils.refreshMedicationWidgets(context) } catch (_: Exception) {}
+    }
+
+    override fun onAppWidgetOptionsChanged(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetId: Int,
+        newOptions: Bundle
+    ) {
+        super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions)
+        // Force refresh on placement/resizing
+        try { appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetId, R.id.widget_list) } catch (_: Exception) {}
+    }
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         appWidgetIds.forEach { appWidgetId ->

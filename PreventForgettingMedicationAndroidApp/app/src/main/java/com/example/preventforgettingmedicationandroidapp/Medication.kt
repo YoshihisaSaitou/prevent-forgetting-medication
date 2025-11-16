@@ -9,5 +9,10 @@ data class Medication(
     val name: String,
     val mealTiming: MealTiming?,
     val timing: Set<IntakeSlot>,
-    val memo: String?
+    val memo: String?,
+    // Time settings
+    val useAppTimes: Boolean = true,
+    val morningMinutes: Int? = null,
+    val noonMinutes: Int? = null,
+    val eveningMinutes: Int? = null
 )
