@@ -15,6 +15,10 @@ interface IntakeHistoryDao {
     @Query("SELECT * FROM intake_history ORDER BY takenAt DESC")
     suspend fun getAll(): List<IntakeHistory>
 
+    // Synchronous accessor for widgets/services
+    @Query("SELECT * FROM intake_history ORDER BY takenAt DESC LIMIT :limit")
+    fun getRecentSync(limit: Int): List<IntakeHistory>
+
     @Query("DELETE FROM intake_history")
     suspend fun clearAll()
 }

@@ -16,5 +16,16 @@ object WidgetUtils {
         } catch (_: Exception) {
         }
     }
-}
 
+    fun refreshHistoryWidgets(context: Context) {
+        try {
+            val awm = AppWidgetManager.getInstance(context)
+            val cn = ComponentName(context, HistoryWidgetProvider::class.java)
+            val ids = awm.getAppWidgetIds(cn)
+            if (ids != null && ids.isNotEmpty()) {
+                awm.notifyAppWidgetViewDataChanged(ids, R.id.widget_list)
+            }
+        } catch (_: Exception) {
+        }
+    }
+}

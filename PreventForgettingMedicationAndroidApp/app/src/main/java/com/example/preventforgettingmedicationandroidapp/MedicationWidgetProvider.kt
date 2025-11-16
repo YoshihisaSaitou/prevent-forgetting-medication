@@ -73,6 +73,10 @@ class MedicationWidgetProvider : AppWidgetProvider() {
                         ids.forEach { id ->
                             awm.notifyAppWidgetViewDataChanged(id, R.id.widget_list)
                         }
+                        // Also refresh history widgets to reflect the new entry
+                        try {
+                            WidgetUtils.refreshHistoryWidgets(context)
+                        } catch (_: Exception) {}
                         pending.finish()
                     }
                 }
