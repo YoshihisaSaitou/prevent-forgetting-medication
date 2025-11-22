@@ -78,7 +78,15 @@ class MedicationRegistrationActivity : AppCompatActivity() {
         btnEvening.setOnClickListener { pickTime(perEvening) { perEvening = it } }
 
         fun applyModeUI(useApp: Boolean) {
+            // Explicitly control visibility for both modes
+            // - Use app times: hide per-medication time inputs
+            // - Per-medication times: show per-medication time inputs
             perMedContainer.visibility = if (useApp) View.GONE else View.VISIBLE
+
+            // Always show the slot checkboxes (morning/noon/evening) regardless of mode
+            morning.visibility = View.VISIBLE
+            noon.visibility = View.VISIBLE
+            evening.visibility = View.VISIBLE
         }
         useAppTimes.isChecked = true
         applyModeUI(true)
