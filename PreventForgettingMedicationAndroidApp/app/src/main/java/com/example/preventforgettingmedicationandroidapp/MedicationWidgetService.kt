@@ -1,8 +1,8 @@
 package com.example.preventforgettingmedicationandroidapp
 
-import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
+import android.os.Binder
 import android.widget.RemoteViews
 import android.widget.RemoteViewsService
 
@@ -15,8 +15,13 @@ class MedicationWidgetService : RemoteViewsService() {
         override fun onCreate() {}
 
         override fun onDataSetChanged() {
-            val dao = MedicationDatabase.getInstance(context).medicationDao()
-            items = try { dao.getAllSync() } catch (_: Exception) { emptyList() }
+            val token = Binder.clearCallingIdentity()
+            try {
+                val dao = MedicationDatabase.getInstance(context).medicationDao()
+                items = try { dao.getAllSync() } catch (_: Exception) { emptyList() }
+            } finally {
+                Binder.restoreCallingIdentity(token)
+            }
         }
 
         override fun onDestroy() {

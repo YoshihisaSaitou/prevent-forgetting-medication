@@ -51,7 +51,8 @@ class MedicationWidgetProvider : AppWidgetProvider() {
                 action = ACTION_TAKE_FROM_WIDGET
                 putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
             }
-            val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            // Use MUTABLE so fill-in extras from collection items are merged
+            val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
             val pendingTemplate = PendingIntent.getBroadcast(context, appWidgetId, clickIntent, flags)
             views.setPendingIntentTemplate(R.id.widget_list, pendingTemplate)
 
