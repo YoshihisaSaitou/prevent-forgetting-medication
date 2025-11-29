@@ -40,7 +40,8 @@ class HistoryWidgetService : RemoteViewsService() {
             rv.setTextViewText(R.id.widget_item_name, entry.medicationName)
             val sdf = SimpleDateFormat("yyyy/MM/dd HH:mm", Locale.getDefault())
             val time = sdf.format(Date(entry.takenAt))
-            rv.setTextViewText(R.id.widget_item_time, time)
+            val manual = if (entry.createdAt != entry.takenAt) " (${context.getString(R.string.manual_label)})" else ""
+            rv.setTextViewText(R.id.widget_item_time, time + manual)
             // Make the whole row clickable to open HistoryActivity via template
             val fillIn = Intent()
             rv.setOnClickFillInIntent(R.id.history_item_root, fillIn)

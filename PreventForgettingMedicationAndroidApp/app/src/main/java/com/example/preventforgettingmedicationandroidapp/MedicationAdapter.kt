@@ -84,10 +84,12 @@ class MedicationAdapter(
 
             takeButton.setOnClickListener {
                 val dao = MedicationDatabase.getInstance(context).intakeHistoryDao()
+                val now = System.currentTimeMillis()
                 val entry = IntakeHistory(
                     medicationId = med.id,
                     medicationName = med.name,
-                    takenAt = System.currentTimeMillis()
+                    takenAt = now,
+                    createdAt = now
                 )
                 // Immediately disable for 5 minutes in UI and persist state
                 TakenStateStore.setDisabledForFiveMinutes(context, med.id)

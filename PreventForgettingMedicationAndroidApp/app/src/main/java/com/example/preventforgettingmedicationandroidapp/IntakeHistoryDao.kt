@@ -21,4 +21,7 @@ interface IntakeHistoryDao {
 
     @Query("DELETE FROM intake_history")
     suspend fun clearAll()
+
+    @Query("SELECT EXISTS(SELECT 1 FROM intake_history WHERE medicationId = :medId AND takenAt = :takenAt)")
+    suspend fun exists(medId: Int, takenAt: Long): Boolean
 }

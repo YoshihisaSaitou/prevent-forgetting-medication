@@ -17,6 +17,14 @@
     <string name="taken_recorded">Taken recorded</string>
     <string name="history">History</string>
     <string name="history_empty">No intake history yet</string>
+    <string name="add">+ Add</string>
+    <string name="select_medications">Select medications</string>
+    <string name="select_date">Select date</string>
+    <string name="no_medications_for_add">No medications to add</string>
+    <string name="no_selection">Please select at least one medication</string>
+    <string name="future_time_not_allowed">Future time is not allowed</string>
+    <string name="history_saved">Saved %1$d, skipped %2$d duplicate(s)</string>
+    <string name="manual_label">Manual</string>
     <string name="memo">Memo</string>
     <string name="memo_hint">Notes, dosage tips, etc.</string>
     <string name="edit">Edit</string>

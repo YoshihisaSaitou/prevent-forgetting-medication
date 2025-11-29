@@ -71,11 +71,13 @@ class MedicationWidgetProvider : AppWidgetProvider() {
                 CoroutineScope(Dispatchers.IO).launch {
                     try {
                         val db = MedicationDatabase.getInstance(context)
+                        val now = System.currentTimeMillis()
                         db.intakeHistoryDao().insert(
                             IntakeHistory(
                                 medicationId = medId,
                                 medicationName = medName,
-                                takenAt = System.currentTimeMillis()
+                                takenAt = now,
+                                createdAt = now
                             )
                         )
                         TakenStateStore.setDisabledForFiveMinutes(context, medId)
