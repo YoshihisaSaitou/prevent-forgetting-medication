@@ -5,6 +5,7 @@ import android.content.Intent
 import android.widget.RemoteViews
 import android.widget.RemoteViewsService
 import android.os.Binder
+import android.graphics.Paint
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -42,6 +43,16 @@ class HistoryWidgetService : RemoteViewsService() {
             val time = sdf.format(Date(entry.takenAt))
             val manual = if (entry.createdAt != entry.takenAt) " (${context.getString(R.string.manual_label)})" else ""
             rv.setTextViewText(R.id.widget_item_time, time + manual)
+
+            val strikeFlags = Paint.STRIKE_THRU_TEXT_FLAG or Paint.ANTI_ALIAS_FLAG
+            val normalFlags = Paint.ANTI_ALIAS_FLAG
+            if (entry.incorrectAt != null) {
+                rv.setInt(R.id.widget_item_name, "setPaintFlags", strikeFlags)
+                rv.setInt(R.id.widget_item_time, "setPaintFlags", strikeFlags)
+            } else {
+                rv.setInt(R.id.widget_item_name, "setPaintFlags", normalFlags)
+                rv.setInt(R.id.widget_item_time, "setPaintFlags", normalFlags)
+            }
             // Make the whole row clickable to open HistoryActivity via template
             val fillIn = Intent()
             rv.setOnClickFillInIntent(R.id.history_item_root, fillIn)

@@ -25,6 +25,8 @@
     <string name="future_time_not_allowed">Future time is not allowed</string>
     <string name="history_saved">Saved %1$d, skipped %2$d duplicate(s)</string>
     <string name="manual_label">Manual</string>
+    <string name="mark_incorrect">Mark incorrect</string>
+    <string name="incorrect_marked">Incorrect</string>
     <string name="memo">Memo</string>
     <string name="memo_hint">Notes, dosage tips, etc.</string>
     <string name="edit">Edit</string>

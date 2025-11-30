@@ -9,5 +9,6 @@ data class IntakeHistory(
     val medicationId: Int,
     val medicationName: String,
     val takenAt: Long,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val incorrectAt: Long? = null
 )

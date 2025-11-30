@@ -6,7 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
-@Database(entities = [Medication::class, IntakeHistory::class], version = 5)
+@Database(entities = [Medication::class, IntakeHistory::class], version = 6)
 @TypeConverters(Converters::class)
 abstract class MedicationDatabase : RoomDatabase() {
     abstract fun medicationDao(): MedicationDao

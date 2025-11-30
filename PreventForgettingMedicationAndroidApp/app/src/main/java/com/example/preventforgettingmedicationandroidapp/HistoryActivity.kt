@@ -24,7 +24,7 @@ import java.util.Locale
 class HistoryActivity : AppCompatActivity() {
     private val dao by lazy { MedicationDatabase.getInstance(this).intakeHistoryDao() }
     private val medDao by lazy { MedicationDatabase.getInstance(this).medicationDao() }
-    private lateinit var adapter: ArrayAdapter<String>
+    private lateinit var adapter: HistoryListAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,7 +36,7 @@ class HistoryActivity : AppCompatActivity() {
             insets
         }
 
-        adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, mutableListOf())
+        adapter = HistoryListAdapter(this)
         val listView = findViewById<ListView>(R.id.history_list)
         listView.adapter = adapter
         listView.emptyView = findViewById<TextView>(R.id.empty_history)
@@ -63,15 +63,8 @@ class HistoryActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         lifecycleScope.launch {
-            val items = dao.getAll().map { entry ->
-                val sdf = SimpleDateFormat("yyyy/MM/dd HH:mm", Locale.getDefault())
-                val time = sdf.format(Date(entry.takenAt))
-                val manual = if (entry.createdAt != entry.takenAt) " (${getString(R.string.manual_label)})" else ""
-                "$time - ${entry.medicationName}$manual"
-            }
-            adapter.clear()
-            adapter.addAll(items)
-            adapter.notifyDataSetChanged()
+            val items = dao.getAll()
+            adapter.setItems(items)
         }
     }
 

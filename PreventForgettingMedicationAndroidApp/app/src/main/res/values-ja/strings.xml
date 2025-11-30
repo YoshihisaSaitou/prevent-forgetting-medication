@@ -36,6 +36,8 @@
     <string name="future_time_not_allowed">未来の日時は選べません</string>
     <string name="history_saved">%1$d件を保存、%2$d件は重複のためスキップ</string>
     <string name="manual_label">手動</string>
+    <string name="mark_incorrect">誤登録</string>
+    <string name="incorrect_marked">誤登録済</string>
     <string name="memo">メモ</string>
     <string name="memo_hint">注意点や飲み方など</string>
     <string name="edit">編集</string>

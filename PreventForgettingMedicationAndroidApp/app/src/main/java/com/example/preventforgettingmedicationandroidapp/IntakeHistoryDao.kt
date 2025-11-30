@@ -24,4 +24,7 @@ interface IntakeHistoryDao {
 
     @Query("SELECT EXISTS(SELECT 1 FROM intake_history WHERE medicationId = :medId AND takenAt = :takenAt)")
     suspend fun exists(medId: Int, takenAt: Long): Boolean
+
+    @Query("UPDATE intake_history SET incorrectAt = :ts WHERE id = :id")
+    suspend fun setIncorrectAt(id: Int, ts: Long?)
 }
