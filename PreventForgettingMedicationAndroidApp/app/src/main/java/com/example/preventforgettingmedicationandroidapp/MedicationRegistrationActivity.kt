@@ -42,6 +42,7 @@ class MedicationRegistrationActivity : AppCompatActivity() {
         val timeModeGroup = findViewById<RadioGroup>(R.id.time_mode_group)
         val useAppTimes = findViewById<RadioButton>(R.id.use_app_times)
         val useMedTimes = findViewById<RadioButton>(R.id.use_med_times)
+        val defaultMedContainer = findViewById<View>(R.id.default_med_time_container)
         val perMedContainer = findViewById<View>(R.id.per_med_time_container)
         val tvMorning = findViewById<TextView>(R.id.med_time_morning)
         val tvNoon = findViewById<TextView>(R.id.med_time_noon)
@@ -79,8 +80,9 @@ class MedicationRegistrationActivity : AppCompatActivity() {
 
         fun applyModeUI(useApp: Boolean) {
             // Explicitly control visibility for both modes
-            // - Use app times: hide per-medication time inputs
-            // - Per-medication times: show per-medication time inputs
+            // - Use app times: show default container, hide per-medication inputs
+            // - Per-medication times: hide default container, show per-medication inputs
+            defaultMedContainer.visibility = if (useApp) View.VISIBLE else View.GONE
             perMedContainer.visibility = if (useApp) View.GONE else View.VISIBLE
 
             // Always show the slot checkboxes (morning/noon/evening) regardless of mode

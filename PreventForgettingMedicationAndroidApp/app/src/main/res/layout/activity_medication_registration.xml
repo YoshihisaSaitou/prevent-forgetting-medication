@@ -45,24 +45,6 @@
                     android:text="@string/after_meal" />
             </RadioGroup>
 
-            <CheckBox
-                android:id="@+id/slot_morning"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/morning" />
-
-            <CheckBox
-                android:id="@+id/slot_noon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/noon" />
-
-            <CheckBox
-                android:id="@+id/slot_evening"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/evening" />
-
             <!-- Time mode selection -->
             <RadioGroup
                 android:id="@+id/time_mode_group"
@@ -81,6 +63,52 @@
                     android:layout_height="wrap_content"
                     android:text="@string/use_med_times" />
             </RadioGroup>
+
+            <LinearLayout
+                android:id="@+id/default_med_time_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone"
+                android:layout_marginTop="8dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="4dp">
+                    <CheckBox
+                        android:id="@+id/slot_morning"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/morning" />
+                </LinearLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="4dp">
+                    <CheckBox
+                        android:id="@+id/slot_noon"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/noon" />
+                </LinearLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="4dp">
+                    <CheckBox
+                        android:id="@+id/slot_evening"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/evening" />
+                </LinearLayout>
+            </LinearLayout>
 
             <!-- Per-medication time inputs -->
             <LinearLayout
