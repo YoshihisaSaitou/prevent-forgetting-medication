@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
@@ -26,24 +27,35 @@
             android:textColor="@android:color/darker_gray" />
     </LinearLayout>
 
-    <Button
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="horizontal">
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_take"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/take_button" />
+        android:text="@string/take_button"
+        android:background="@drawable/button_action"
+        app:backgroundTint="@null" />
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_edit"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:text="@string/edit" />
+        android:text="@string/edit"
+        android:background="@drawable/button_action"
+        app:backgroundTint="@null" />
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_delete"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:text="@string/delete" />
-
+        android:text="@string/delete"
+        android:background="@drawable/button_delete"
+        app:backgroundTint="@null" />
+    </LinearLayout>
 </LinearLayout>

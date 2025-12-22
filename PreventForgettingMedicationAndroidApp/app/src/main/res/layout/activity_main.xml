@@ -20,8 +20,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    
-
     <ListView
         android:id="@+id/medication_list"
         android:layout_width="0dp"

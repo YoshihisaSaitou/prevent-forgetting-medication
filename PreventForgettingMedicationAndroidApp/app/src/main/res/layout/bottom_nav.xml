@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_list"
+        android:title="薬一覧"
+        android:icon="@drawable/baseline_list_24" />
+    <item
+        android:id="@+id/nav_add"
+        android:title="薬の登録"
+        android:icon="@drawable/outline_add_circle_24" />
+    <item
+        android:id="@+id/nav_history"
+        android:title="飲んだ履歴"
+        android:icon="@drawable/outline_history_24" />
+    <item
+        android:id="@+id/nav_settings"
+        android:title="設定"
+        android:icon="@drawable/baseline_settings_24" />
+</menu>

@@ -2,4 +2,6 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="button_delete_bg">#da4235</color>
+    <color name="button_action_bg">#2bc673</color>
 </resources>
