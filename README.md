@@ -1,64 +1,16 @@
-## 初期設定
+## 概要
 
-「docker-compose.yml.example」をコピーして「docker-compose.yml」を作成する。
-「.env.example」をコピーして「.env」を作成する。
-「.env」の「HOST_IP」にPCのIPアドレスを設定し、「EXPO_TOKEN」にExpoの管理画面で取得したAccess tokensを設定する。
-Expoの管理画面は下記からログインできる。
-https://expo.dev/
+アプリは薬を飲んだか記録アプリで、飲み忘れ防止やしっかり飲んでいるか家族や医者が把握する目的があります。
 
-## React Nativeのインストールコマンド例
+## 要件
 
-初回のみ必要なので、通常は実施不要。
-
-```
-npx create-expo-app@latest <プロジェクト名>
-```
-
-## EAS（Expo Application Services）の設定
-
-初回のみ必要なので、通常は実施不要。
-
-```
-eas build:configure
-```
-
-## React NativeコンテナでのExpoの起動コマンド
-
-```
-npx expo start
-```
-
-## ネイティブモジュールの作成コマンド
-
-app.json / app.config.* と導入済みパッケージ・Config Plugin をもとに、ネイティブの ios/ と android/ プロジェクトを生成・同期します。Expo はこの仕組みを Continuous Native Generation (CNG) と呼び、同コマンドはその中核となる。
-Expo Go だけでは動かない ネイティブモジュール（例：VisionCamera など） を使う／Dev Client を作る／ネイティブ設定を変更したい（Info.plist、AndroidManifest.xml 等）時に実行する。
-
-```
-npx expo prebuild
-```
-
-## AndroidのAAB/APKファイルとiOSのIPAファイルの作成コマンド
-
-「--local」を付けないと有料のクラウド上で実行される。
-「--local」は1回の実行で1プラットフォームのみビルド可能なので、Allを選択するとエラーになる。
-先にeasコマンドのインストールやアカウントのセットアップが必要、詳細は下記を参照する。
-https://docs.expo.dev/build/setup/?utm_source=chatgpt.com
-
-```
-本番配布用
-eas build --local -p android
-eas build --local -p ios
-
-開発配布用
-eas build --local -p android --profile development
-eas build --local -p ios --profile development
-
-検証配布用
-eas build --local -p android --profile preview
-eas build --local -p ios --profile preview
-```
-
-## ストアへの提出フロー
-
-- Android：eas build --local -p android --profile production → 生成された .aab を Play Console にアップロード。
-- iOS：eas build --local -p ios --profile production → 生成された .ipa を Xcode Organizer / Transporter で App Store Connect にアップロード。
+- AndroidとiPhoneのネイティブアプリとして開発する。
+- 開発環境はAndroidはAndroid StudioでKotlinを使用し、iPhoneはXcodeでSwiftを使用する。
+- 薬を登録できる機能。
+登録する時に食前、食後、朝、昼、晩と飲む時間帯を選択できる。
+- 薬を飲んだか記録する機能。
+登録した薬に「飲んだ」ボタンで飲んだ事を反映できる。
+- 薬を飲んで無かったら飲むまで通知する機能。
+ステータスバーに通知する間隔を30分と1時間で設定できる。
+「飲んだ」ボタンのアクションで把握できる。
+- お薬手帳をカメラで撮って薬を登録する機能。
