@@ -1,16 +1,23 @@
-## 概要
+# PreventForgettingMedicationAndroidApp
 
-アプリは薬を飲んだか記録アプリで、飲み忘れ防止やしっかり飲んでいるか家族や医者が把握する目的があります。
+## プロジェクトの概要
+- 服薬忘れ防止を目的とした Android アプリです。
+- AndroidアプリのソースコードはPreventForgettingMedicationAndroidAppディレクトリにあります。
+- 薬の登録、服用記録、リマインド通知、ホームウィジェット表示を提供します。
+- 詳細仕様は [docs/product-spec.md](docs/product-spec.md) を参照してください。
 
-## 要件
+## セットアップ
+1. Android Studio (最新安定版推奨) を用意する
+1. JDK 11 を利用できる状態にする
+1. プロジェクトルートで Gradle Sync を実行する
+1. エミュレータまたは実機 (Android 7.0 / API 24 以上) を準備する
 
-- AndroidとiPhoneのネイティブアプリとして開発する。
-- 開発環境はAndroidはAndroid StudioでKotlinを使用し、iPhoneはXcodeでSwiftを使用する。
-- 薬を登録できる機能。
-登録する時に食前、食後、朝、昼、晩と飲む時間帯を選択できる。
-- 薬を飲んだか記録する機能。
-登録した薬に「飲んだ」ボタンで飲んだ事を反映できる。
-- 薬を飲んで無かったら飲むまで通知する機能。
-ステータスバーに通知する間隔を30分と1時間で設定できる。
-「飲んだ」ボタンのアクションで把握できる。
-- お薬手帳をカメラで撮って薬を登録する機能。
+## 開発方法
+1. デバッグ実行: Android Studio から `app` モジュールを実行
+1. CLI ビルド: `./gradlew assembleDebug`
+1. テスト実行: `./gradlew test` / `./gradlew connectedAndroidTest`
+
+## 入口
+- 仕様の入口: [docs/product-spec.md](docs/product-spec.md)
+- 設計の入口: [docs/architecture.md](docs/architecture.md)
+- 実装の入口: `app/src/main/java/com/example/preventforgettingmedicationandroidapp/MainActivity.kt`
