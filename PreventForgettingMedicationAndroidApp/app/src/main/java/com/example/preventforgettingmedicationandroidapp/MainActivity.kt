@@ -1,26 +1,31 @@
 package com.example.preventforgettingmedicationandroidapp
 
-import android.Manifest
+import android.app.AlertDialog
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
-import android.view.View
 import android.widget.Button
 import android.widget.ListView
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.Dispatchers
+import com.example.preventforgettingmedicationandroidapp.application.usecase.SyncAlarmsUseCase
+import com.example.preventforgettingmedicationandroidapp.presentation.viewmodel.MainEvent
+import com.example.preventforgettingmedicationandroidapp.presentation.viewmodel.MainViewModel
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
-    private val scheduleDao by lazy { MedicationDatabase.getInstance(this).scheduleDao() }
+    private val viewModel: MainViewModel by viewModels()
+
+    @Inject
+    lateinit var syncAlarmsUseCase: SyncAlarmsUseCase
+
     private lateinit var adapter: MedicationAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -33,15 +38,28 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
-        adapter = MedicationAdapter(this, mutableListOf())
+        adapter = MedicationAdapter(
+            context = this,
+            items = mutableListOf(),
+            onTake = { viewModel.execute(it) },
+            onEdit = {
+                startActivity(Intent(this, MedicationRegistrationActivity::class.java).putExtra("SCHEDULE_ID", it.value))
+            },
+            onDelete = { scheduleId ->
+                AlertDialog.Builder(this)
+                    .setMessage(getString(R.string.confirm_delete_schedule))
+                    .setPositiveButton(android.R.string.ok) { _, _ -> viewModel.delete(scheduleId) }
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show()
+            }
+        )
+
         val listView = findViewById<ListView>(R.id.medication_list)
         listView.adapter = adapter
         listView.emptyView = findViewById(R.id.empty_message)
         listView.setOnItemClickListener { _, _, position, _ ->
-            val schedule = adapter.getItem(position).schedule
-            val intent = Intent(this, MedicationRegistrationActivity::class.java)
-            intent.putExtra("SCHEDULE_ID", schedule.id)
-            startActivity(intent)
+            val item = adapter.getItem(position)
+            startActivity(Intent(this, MedicationRegistrationActivity::class.java).putExtra("SCHEDULE_ID", item.id.value))
         }
 
         findViewById<Button>(R.id.footer_add).setOnClickListener {
@@ -57,41 +75,26 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
 
-        requestNotificationPermissionIfNeeded()
-        AlarmScheduler.scheduleAll(this)
+        lifecycleScope.launch {
+            viewModel.items.collect { adapter.setItems(it) }
+        }
+        lifecycleScope.launch {
+            viewModel.events.collect { event ->
+                when (event) {
+                    is MainEvent.Recorded -> Toast.makeText(this@MainActivity, getString(R.string.taken_recorded_count, event.count), Toast.LENGTH_SHORT).show()
+                    MainEvent.Duplicate -> Toast.makeText(this@MainActivity, getString(R.string.duplicate_schedule_skipped), Toast.LENGTH_SHORT).show()
+                    MainEvent.Disabled -> Toast.makeText(this@MainActivity, getString(R.string.schedule_disabled_temporarily), Toast.LENGTH_SHORT).show()
+                    MainEvent.Missing -> Toast.makeText(this@MainActivity, getString(R.string.no_schedules), Toast.LENGTH_SHORT).show()
+                    is MainEvent.Error -> Toast.makeText(this@MainActivity, event.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        syncAlarmsUseCase()
     }
 
     override fun onResume() {
         super.onResume()
-        lifecycleScope.launch {
-            loadSchedules()
-        }
-    }
-
-    private suspend fun loadSchedules() {
-        val schedules = withContext(Dispatchers.IO) { scheduleDao.getAllWithMedications() }
-        adapter.setItems(schedules)
-        WidgetUtils.refreshMedicationWidgets(this)
-        if (schedules.isEmpty()) {
-            AlarmScheduler.cancelAll(this)
-        } else {
-            AlarmScheduler.scheduleAll(this)
-        }
-    }
-
-    private fun requestNotificationPermissionIfNeeded() {
-        if (Build.VERSION.SDK_INT >= 33) {
-            val granted = ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) == PackageManager.PERMISSION_GRANTED
-            if (!granted) {
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                    100
-                )
-            }
-        }
+        viewModel.load()
     }
 }

@@ -4,17 +4,22 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.ListView
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.Dispatchers
+import com.example.preventforgettingmedicationandroidapp.presentation.viewmodel.MedicationMasterEvent
+import com.example.preventforgettingmedicationandroidapp.presentation.viewmodel.MedicationMasterViewModel
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
+@AndroidEntryPoint
 class MedicationMasterActivity : AppCompatActivity() {
-    private val dao by lazy { MedicationDatabase.getInstance(this).medicationDao() }
+    private val viewModel: MedicationMasterViewModel by viewModels()
     private lateinit var adapter: MedicationMasterAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,13 +32,37 @@ class MedicationMasterActivity : AppCompatActivity() {
             insets
         }
 
-        adapter = MedicationMasterAdapter(this, mutableListOf()) {
-            loadMedications()
-        }
+        adapter = MedicationMasterAdapter(
+            items = mutableListOf(),
+            onEdit = {
+                startActivity(Intent(this, MedicationMasterEditActivity::class.java).putExtra("MED_ID", it.value))
+            },
+            onDelete = {
+                AlertDialog.Builder(this)
+                    .setMessage(getString(R.string.confirm_delete_medication_master))
+                    .setPositiveButton(android.R.string.ok) { _, _ -> viewModel.delete(it) }
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show()
+            }
+        )
 
         val listView = findViewById<ListView>(R.id.medication_master_list)
         listView.adapter = adapter
         listView.emptyView = findViewById(R.id.empty_message)
+
+        lifecycleScope.launch {
+            viewModel.items.collect { adapter.setItems(it) }
+        }
+
+        lifecycleScope.launch {
+            viewModel.events.collect { event ->
+                when (event) {
+                    MedicationMasterEvent.Deleted -> Toast.makeText(this@MedicationMasterActivity, getString(R.string.delete), Toast.LENGTH_SHORT).show()
+                    MedicationMasterEvent.InUse -> Toast.makeText(this@MedicationMasterActivity, getString(R.string.medication_delete_blocked_in_use), Toast.LENGTH_SHORT).show()
+                    is MedicationMasterEvent.Error -> Toast.makeText(this@MedicationMasterActivity, event.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
 
         findViewById<Button>(R.id.add_medication_button).setOnClickListener {
             startActivity(Intent(this, MedicationMasterEditActivity::class.java))
@@ -55,16 +84,6 @@ class MedicationMasterActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        loadMedications()
-    }
-
-    private fun loadMedications() {
-        lifecycleScope.launch(Dispatchers.IO) {
-            val items = dao.getAll()
-            withContext(Dispatchers.Main) {
-                adapter.setItems(items)
-            }
-        }
+        viewModel.load()
     }
 }
-

@@ -15,7 +15,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         ScheduleMedicationCrossRef::class,
         IntakeHistory::class
     ],
-    version = 7
+    version = 8
 )
 @TypeConverters(Converters::class)
 abstract class MedicationDatabase : RoomDatabase() {
@@ -131,6 +131,32 @@ abstract class MedicationDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Keep data and remove duplicate rows before enforcing the unique constraint.
+                db.execSQL(
+                    """
+                    DELETE FROM intake_history
+                    WHERE scheduleId IS NOT NULL
+                      AND id NOT IN (
+                        SELECT MIN(id)
+                        FROM intake_history
+                        WHERE scheduleId IS NOT NULL
+                        GROUP BY scheduleId, medicationId, takenAt
+                    )
+                    """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+                    CREATE UNIQUE INDEX IF NOT EXISTS index_intake_history_schedule_medication_takenAt_unique
+                    ON intake_history(scheduleId, medicationId, takenAt)
+                    WHERE scheduleId IS NOT NULL
+                    """.trimIndent()
+                )
+            }
+        }
+
         fun getInstance(context: Context): MedicationDatabase =
             INSTANCE ?: synchronized(this) {
                 INSTANCE ?: Room.databaseBuilder(
@@ -138,8 +164,7 @@ abstract class MedicationDatabase : RoomDatabase() {
                     MedicationDatabase::class.java,
                     "medications.db"
                 )
-                    .allowMainThreadQueries()
-                    .addMigrations(MIGRATION_6_7)
+                    .addMigrations(MIGRATION_6_7, MIGRATION_7_8)
                     .build()
                     .also { INSTANCE = it }
             }

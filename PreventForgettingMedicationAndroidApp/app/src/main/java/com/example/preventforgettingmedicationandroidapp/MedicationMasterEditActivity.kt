@@ -7,16 +7,20 @@ import android.widget.EditText
 import android.widget.RadioButton
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.Dispatchers
+import com.example.preventforgettingmedicationandroidapp.domain.model.MealTiming
+import com.example.preventforgettingmedicationandroidapp.presentation.viewmodel.MedicationMasterEditEvent
+import com.example.preventforgettingmedicationandroidapp.presentation.viewmodel.MedicationMasterEditViewModel
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
+@AndroidEntryPoint
 class MedicationMasterEditActivity : AppCompatActivity() {
-    private val dao by lazy { MedicationDatabase.getInstance(this).medicationDao() }
+    private val viewModel: MedicationMasterEditViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,65 +38,51 @@ class MedicationMasterEditActivity : AppCompatActivity() {
         val afterMeal = findViewById<RadioButton>(R.id.after_meal)
         val saveButton = findViewById<Button>(R.id.save_button)
 
-        val medId = intent.getIntExtra("MED_ID", -1)
-        var existing: Medication? = null
+        lifecycleScope.launch {
+            viewModel.state.collect { state ->
+                if (nameInput.text.toString() != state.name) {
+                    nameInput.setText(state.name)
+                    nameInput.setSelection(nameInput.text.length)
+                }
+                if (memoInput.text.toString() != state.memo) {
+                    memoInput.setText(state.memo)
+                    memoInput.setSelection(memoInput.text.length)
+                }
+                when (state.mealTiming) {
+                    MealTiming.BEFORE_MEAL -> beforeMeal.isChecked = true
+                    MealTiming.AFTER_MEAL -> afterMeal.isChecked = true
+                    null -> {
+                        beforeMeal.isChecked = false
+                        afterMeal.isChecked = false
+                    }
+                }
+            }
+        }
 
-        if (medId != -1) {
-            lifecycleScope.launch(Dispatchers.IO) {
-                existing = dao.getById(medId)
-                withContext(Dispatchers.Main) {
-                    existing?.let { med ->
-                        nameInput.setText(med.name)
-                        memoInput.setText(med.memo ?: "")
-                        when (med.mealTiming) {
-                            MealTiming.BEFORE_MEAL -> beforeMeal.isChecked = true
-                            MealTiming.AFTER_MEAL -> afterMeal.isChecked = true
-                            null -> {}
-                        }
+        lifecycleScope.launch {
+            viewModel.events.collect { event ->
+                when (event) {
+                    MedicationMasterEditEvent.Saved -> {
+                        Toast.makeText(this@MedicationMasterEditActivity, getString(R.string.medication_saved), Toast.LENGTH_SHORT).show()
+                        finish()
+                    }
+                    is MedicationMasterEditEvent.Error -> {
+                        Toast.makeText(this@MedicationMasterEditActivity, event.message, Toast.LENGTH_SHORT).show()
                     }
                 }
             }
         }
 
         saveButton.setOnClickListener {
-            val name = nameInput.text.toString().trim()
-            if (name.isEmpty()) {
-                Toast.makeText(this, getString(R.string.error_medication_name_required), Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            val mealTiming = when {
+            viewModel.setName(nameInput.text.toString().trim())
+            viewModel.setMemo(memoInput.text.toString())
+            val timing = when {
                 beforeMeal.isChecked -> MealTiming.BEFORE_MEAL
                 afterMeal.isChecked -> MealTiming.AFTER_MEAL
                 else -> null
             }
-
-            val memo = memoInput.text.toString().trim().ifEmpty { null }
-            val base = existing
-
-            val medication = Medication(
-                id = if (medId == -1) 0 else medId,
-                name = name,
-                mealTiming = mealTiming,
-                timing = base?.timing ?: setOf(IntakeSlot.MORNING),
-                memo = memo,
-                useAppTimes = base?.useAppTimes ?: true,
-                morningMinutes = base?.morningMinutes,
-                noonMinutes = base?.noonMinutes,
-                eveningMinutes = base?.eveningMinutes
-            )
-
-            lifecycleScope.launch(Dispatchers.IO) {
-                if (medId == -1) {
-                    dao.insert(medication)
-                } else {
-                    dao.update(medication)
-                }
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(this@MedicationMasterEditActivity, getString(R.string.medication_saved), Toast.LENGTH_SHORT).show()
-                    finish()
-                }
-            }
+            viewModel.setMealTiming(timing)
+            viewModel.save()
         }
 
         findViewById<Button>(R.id.footer_list).setOnClickListener {
@@ -107,5 +97,8 @@ class MedicationMasterEditActivity : AppCompatActivity() {
         findViewById<Button>(R.id.footer_settings).setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
+
+        val medId = intent.getIntExtra("MED_ID", -1)
+        viewModel.load(medId.takeIf { it > 0 })
     }
 }

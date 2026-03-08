@@ -10,23 +10,21 @@ import android.widget.RadioGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.Dispatchers
+import com.example.preventforgettingmedicationandroidapp.domain.model.IntakeSlot
+import com.example.preventforgettingmedicationandroidapp.presentation.viewmodel.ScheduleFormEvent
+import com.example.preventforgettingmedicationandroidapp.presentation.viewmodel.ScheduleFormViewModel
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
+@AndroidEntryPoint
 class MedicationRegistrationActivity : AppCompatActivity() {
-    private val db by lazy { MedicationDatabase.getInstance(this) }
-    private val scheduleDao by lazy { db.scheduleDao() }
-    private val medicationDao by lazy { db.medicationDao() }
-
-    private var allMedications: List<Medication> = emptyList()
-    private val selectedMedicationIds = linkedSetOf<Int>()
-    private var selectedMinutes = 7 * 60
+    private val viewModel: ScheduleFormViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,9 +47,8 @@ class MedicationRegistrationActivity : AppCompatActivity() {
         val selectMedsButton = findViewById<Button>(R.id.btn_select_medications)
         val saveButton = findViewById<Button>(R.id.save_button)
 
-        morning.isChecked = true
-        selectedMinutes = TimePreferences.getMorningMinutes(this)
-        selectedTimeText.text = TimePreferences.formatMinutes(selectedMinutes)
+        var selectedMinutes = 7 * 60
+        val selectedMedicationIds = linkedSetOf<Int>()
 
         fun currentSlot(): IntakeSlot = when {
             morning.isChecked -> IntakeSlot.MORNING
@@ -59,13 +56,65 @@ class MedicationRegistrationActivity : AppCompatActivity() {
             else -> IntakeSlot.EVENING
         }
 
-        fun refreshSelectedMedsText() {
-            val selected = allMedications.filter { selectedMedicationIds.contains(it.id) }
-            selectedMedsText.text = if (selected.isEmpty()) {
+        fun refreshSelectedMedsText(options: List<Pair<Int, String>>) {
+            val names = options.filter { selectedMedicationIds.contains(it.first) }.map { it.second }
+            selectedMedsText.text = if (names.isEmpty()) {
                 getString(R.string.no_medications_selected)
             } else {
-                selected.joinToString(", ") { it.name }
+                names.joinToString(", ")
             }
+        }
+
+        lifecycleScope.launch {
+            viewModel.state.collect { state ->
+                if (nameInput.text.toString() != state.name) {
+                    nameInput.setText(state.name)
+                    nameInput.setSelection(nameInput.text.length)
+                }
+
+                when (state.slot) {
+                    IntakeSlot.MORNING -> morning.isChecked = true
+                    IntakeSlot.NOON -> noon.isChecked = true
+                    IntakeSlot.EVENING -> evening.isChecked = true
+                }
+
+                selectedMinutes = state.timeMinutes
+                selectedTimeText.text = TimePreferences.formatMinutes(selectedMinutes)
+
+                selectedMedicationIds.clear()
+                selectedMedicationIds.addAll(state.selectedMedicationIds)
+                val options = state.medicationOptions.map { it.id to it.name }
+                refreshSelectedMedsText(options)
+            }
+        }
+
+        lifecycleScope.launch {
+            viewModel.events.collect { event ->
+                when (event) {
+                    ScheduleFormEvent.Saved -> {
+                        Toast.makeText(this@MedicationRegistrationActivity, getString(R.string.schedule_saved), Toast.LENGTH_SHORT).show()
+                        finish()
+                    }
+                    is ScheduleFormEvent.Error -> {
+                        Toast.makeText(this@MedicationRegistrationActivity, event.message, Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+
+        morning.isChecked = true
+        selectedTimeText.text = TimePreferences.formatMinutes(selectedMinutes)
+
+        slotGroup.setOnCheckedChangeListener { _, _ ->
+            val slot = currentSlot()
+            selectedMinutes = when (slot) {
+                IntakeSlot.MORNING -> 7 * 60
+                IntakeSlot.NOON -> 12 * 60
+                IntakeSlot.EVENING -> 19 * 60
+            }
+            selectedTimeText.text = TimePreferences.formatMinutes(selectedMinutes)
+            viewModel.setSlot(slot)
+            viewModel.setTimeMinutes(selectedMinutes)
         }
 
         pickTimeButton.setOnClickListener {
@@ -74,27 +123,20 @@ class MedicationRegistrationActivity : AppCompatActivity() {
             TimePickerDialog(this, { _, hourOfDay, minute ->
                 selectedMinutes = hourOfDay * 60 + minute
                 selectedTimeText.text = TimePreferences.formatMinutes(selectedMinutes)
+                viewModel.setTimeMinutes(selectedMinutes)
             }, h, m, true).show()
         }
 
-        slotGroup.setOnCheckedChangeListener { _, _ ->
-            selectedMinutes = when (currentSlot()) {
-                IntakeSlot.MORNING -> TimePreferences.getMorningMinutes(this)
-                IntakeSlot.NOON -> TimePreferences.getNoonMinutes(this)
-                IntakeSlot.EVENING -> TimePreferences.getEveningMinutes(this)
-            }
-            selectedTimeText.text = TimePreferences.formatMinutes(selectedMinutes)
-        }
-
         selectMedsButton.setOnClickListener {
-            if (allMedications.isEmpty()) {
+            val options = viewModel.state.value.medicationOptions
+            if (options.isEmpty()) {
                 Toast.makeText(this, getString(R.string.no_medications_for_add), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            val names = allMedications.map { it.name }.toTypedArray()
-            val checked = BooleanArray(allMedications.size) { idx ->
-                selectedMedicationIds.contains(allMedications[idx].id)
-            }
+
+            val names = options.map { it.name }.toTypedArray()
+            val checked = BooleanArray(options.size) { idx -> selectedMedicationIds.contains(options[idx].id) }
+
             AlertDialog.Builder(this)
                 .setTitle(getString(R.string.select_medications))
                 .setMultiChoiceItems(names, checked) { _, which, isChecked ->
@@ -103,78 +145,20 @@ class MedicationRegistrationActivity : AppCompatActivity() {
                 .setPositiveButton(android.R.string.ok) { _, _ ->
                     selectedMedicationIds.clear()
                     checked.forEachIndexed { index, isChecked ->
-                        if (isChecked) selectedMedicationIds.add(allMedications[index].id)
+                        if (isChecked) selectedMedicationIds.add(options[index].id)
                     }
-                    refreshSelectedMedsText()
+                    viewModel.setSelectedMedicationIds(selectedMedicationIds)
                 }
                 .setNegativeButton(android.R.string.cancel, null)
                 .show()
         }
 
-        val scheduleId = intent.getIntExtra("SCHEDULE_ID", -1)
-
-        lifecycleScope.launch(Dispatchers.IO) {
-            allMedications = medicationDao.getAll()
-            val editing = if (scheduleId != -1) scheduleDao.getWithMedicationsById(scheduleId) else null
-            withContext(Dispatchers.Main) {
-                if (editing != null) {
-                    nameInput.setText(editing.schedule.name)
-                    when (editing.schedule.slot) {
-                        IntakeSlot.MORNING -> morning.isChecked = true
-                        IntakeSlot.NOON -> noon.isChecked = true
-                        IntakeSlot.EVENING -> evening.isChecked = true
-                    }
-                    selectedMinutes = editing.schedule.timeMinutes
-                    selectedTimeText.text = TimePreferences.formatMinutes(selectedMinutes)
-                    selectedMedicationIds.clear()
-                    editing.medications.forEach { selectedMedicationIds.add(it.id) }
-                }
-                refreshSelectedMedsText()
-            }
-        }
-
         saveButton.setOnClickListener {
-            val name = nameInput.text.toString().trim()
-            if (name.isEmpty()) {
-                Toast.makeText(this, getString(R.string.error_schedule_name_required), Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-            if (selectedMedicationIds.isEmpty()) {
-                Toast.makeText(this, getString(R.string.error_select_at_least_one_medication), Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            val slot = currentSlot()
-            val schedule = Schedule(
-                id = if (scheduleId == -1) 0 else scheduleId,
-                name = name,
-                slot = slot,
-                timeMinutes = selectedMinutes,
-                isActive = true
-            )
-
-            lifecycleScope.launch(Dispatchers.IO) {
-                val targetId = if (scheduleId == -1) {
-                    scheduleDao.insert(schedule).toInt()
-                } else {
-                    scheduleDao.update(schedule)
-                    scheduleId
-                }
-
-                scheduleDao.deleteCrossRefsForSchedule(targetId)
-                val refs = selectedMedicationIds.mapIndexed { index, medId ->
-                    ScheduleMedicationCrossRef(targetId, medId, index)
-                }
-                scheduleDao.insertCrossRefs(refs)
-
-                AlarmScheduler.scheduleAll(this@MedicationRegistrationActivity)
-                WidgetUtils.refreshMedicationWidgets(this@MedicationRegistrationActivity)
-
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(this@MedicationRegistrationActivity, getString(R.string.schedule_saved), Toast.LENGTH_SHORT).show()
-                    finish()
-                }
-            }
+            viewModel.setName(nameInput.text.toString().trim())
+            viewModel.setSlot(currentSlot())
+            viewModel.setTimeMinutes(selectedMinutes)
+            viewModel.setSelectedMedicationIds(selectedMedicationIds)
+            viewModel.save()
         }
 
         findViewById<Button>(R.id.footer_list).setOnClickListener {
@@ -189,6 +173,8 @@ class MedicationRegistrationActivity : AppCompatActivity() {
         findViewById<Button>(R.id.footer_settings).setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
+
+        val scheduleId = intent.getIntExtra("SCHEDULE_ID", -1)
+        viewModel.load(scheduleId.takeIf { it > 0 })
     }
 }
-

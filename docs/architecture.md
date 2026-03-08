@@ -106,3 +106,9 @@
 - Espresso
 - Robolectric
 - Hilt Testing
+
+## 10. 現行実装への反映
+- パッケージを `domain / application / infrastructure / presentation / di` に分離し、ドメイン駆動設計で実装する。
+- `@HiltAndroidApp` Application と `@AndroidEntryPoint` Activity/Receiver を適用し、直接DAO参照を削減する。
+- Roomは `medications.db` を維持しつつ `v7 -> v8` Migration を追加する。
+- 受信系（Boot/Notification/Widgetアクション）はUseCase経由で実行し、業務判定の重複を避ける。

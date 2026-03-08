@@ -9,58 +9,76 @@ import android.content.Intent
 import android.graphics.Color
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import com.example.preventforgettingmedicationandroidapp.application.usecase.GetScheduleByIdUseCase
+import com.example.preventforgettingmedicationandroidapp.application.usecase.SyncAlarmsUseCase
+import com.example.preventforgettingmedicationandroidapp.domain.model.ScheduleId
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
+@AndroidEntryPoint
 class NotificationReceiver : BroadcastReceiver() {
+
+    @Inject
+    lateinit var getScheduleByIdUseCase: GetScheduleByIdUseCase
+
+    @Inject
+    lateinit var syncAlarmsUseCase: SyncAlarmsUseCase
+
     override fun onReceive(context: Context, intent: Intent) {
-        val scheduleId = intent.getIntExtra("schedule_id", -1)
-        if (scheduleId == -1) {
-            AlarmScheduler.scheduleAll(context)
+        val scheduleIdRaw = intent.getIntExtra("schedule_id", -1)
+        if (scheduleIdRaw <= 0) {
+            syncAlarmsUseCase()
             return
         }
 
-        val scheduleDao = MedicationDatabase.getInstance(context).scheduleDao()
-        val scheduleWithMeds = try {
-            scheduleDao.getWithMedicationsByIdSync(scheduleId)
-        } catch (_: Exception) {
-            null
+        val pending = goAsync()
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val scheduleWithMeds = getScheduleByIdUseCase(ScheduleId(scheduleIdRaw))
+                if (scheduleWithMeds == null || scheduleWithMeds.medications.isEmpty() || !scheduleWithMeds.schedule.isActive) {
+                    return@launch
+                }
+
+                val medsPreview = scheduleWithMeds.medications.take(3).joinToString(", ") { it.name }
+                val title = context.getString(R.string.notification_title)
+                val message = context.getString(
+                    R.string.notification_message_schedule,
+                    scheduleWithMeds.schedule.name,
+                    medsPreview
+                )
+
+                withContext(Dispatchers.Main) {
+                    ensureChannel(context, CHANNEL_ID)
+
+                    val tapIntent = Intent(context, MainActivity::class.java)
+                    val tapPi = PendingIntent.getActivity(
+                        context,
+                        scheduleIdRaw,
+                        tapIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    )
+
+                    val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                    val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+                        .setSmallIcon(R.mipmap.ic_launcher)
+                        .setContentTitle(title)
+                        .setContentText(message)
+                        .setAutoCancel(true)
+                        .setContentIntent(tapPi)
+                        .setPriority(NotificationCompat.PRIORITY_HIGH)
+                        .build()
+
+                    nm.notify(scheduleIdRaw, notification)
+                }
+            } finally {
+                syncAlarmsUseCase()
+                pending.finish()
+            }
         }
-
-        if (scheduleWithMeds == null || scheduleWithMeds.medications.isEmpty() || !scheduleWithMeds.schedule.isActive) {
-            AlarmScheduler.scheduleAll(context)
-            return
-        }
-
-        ensureChannel(context, CHANNEL_ID)
-
-        val medsPreview = scheduleWithMeds.medications.take(3).joinToString(", ") { it.name }
-        val title = context.getString(R.string.notification_title)
-        val message = context.getString(
-            R.string.notification_message_schedule,
-            scheduleWithMeds.schedule.name,
-            medsPreview
-        )
-
-        val tapIntent = Intent(context, MainActivity::class.java)
-        val tapPi = PendingIntent.getActivity(
-            context,
-            scheduleId,
-            tapIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle(title)
-            .setContentText(message)
-            .setAutoCancel(true)
-            .setContentIntent(tapPi)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .build()
-
-        nm.notify(scheduleId, notification)
-
-        AlarmScheduler.scheduleAll(context)
     }
 
     private fun ensureChannel(context: Context, channelId: String) {
@@ -86,4 +104,3 @@ class NotificationReceiver : BroadcastReceiver() {
         const val CHANNEL_ID = "medication_reminders"
     }
 }
-

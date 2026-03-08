@@ -115,3 +115,32 @@ CREATE UNIQUE INDEX ux_history_schedule_med_taken
   - 実行→履歴→ウィジェット反映
 - Migration
   - v6サンプルDBからの移行検証
+
+## 7. 実装マッピング（DDD + Clean Architecture）
+- `presentation`
+  - Activity + ViewModel（StateFlow）
+  - `MainViewModel`, `ScheduleFormViewModel`, `HistoryViewModel`, `MedicationMaster*ViewModel`
+- `application`
+  - UseCase + Port
+  - `GetScheduleList`, `CreateOrUpdateSchedule`, `ExecuteSchedule`, `AddManualHistory`, `ToggleIncorrect`, `SyncAlarms`
+- `domain`
+  - Entity/ValueObject/Policy/Repository interface
+  - `ScheduleId`, `MedicationId`, `TakenAt`, `IntakePolicy`
+- `infrastructure`
+  - Room Repository実装、Alarm/Widget/TakenState Adapter
+- `di`
+  - Hilt Module (`DatabaseModule`, `BindingModule`)
+
+## 8. DB移行の実装方針
+- DB名: `medications.db`（維持）
+- Migration: `v7 -> v8`
+  - `intake_history` の重複行を事前削除
+  - `scheduleId IS NOT NULL` 条件付きで `(scheduleId, medicationId, takenAt)` の一意インデックス追加
+- `allowMainThreadQueries` は使用しない
+
+## 9. テスト実装方針（必須ツール）
+- JUnit: `IntakePolicy` バリデーションテスト
+- MockK + kotlinx-coroutines-test: UseCase / Repository 単体テスト
+- AndroidX Test（core/runner/rules）+ Espresso: `MainActivity` UI検証
+- Robolectric: `BootReceiver` JVMテスト
+- Hilt Testing: Repository差し替え統合テスト

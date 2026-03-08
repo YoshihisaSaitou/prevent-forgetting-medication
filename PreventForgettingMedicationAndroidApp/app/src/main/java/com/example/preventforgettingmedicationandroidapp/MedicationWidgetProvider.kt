@@ -10,12 +10,21 @@ import android.net.Uri
 import android.os.Bundle
 import android.widget.RemoteViews
 import android.widget.Toast
+import com.example.preventforgettingmedicationandroidapp.application.usecase.ExecuteScheduleUseCase
+import com.example.preventforgettingmedicationandroidapp.domain.model.ScheduleId
+import com.example.preventforgettingmedicationandroidapp.domain.model.TakenAt
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+@AndroidEntryPoint
 class MedicationWidgetProvider : AppWidgetProvider() {
+
+    @Inject
+    lateinit var executeScheduleUseCase: ExecuteScheduleUseCase
 
     override fun onEnabled(context: Context) {
         super.onEnabled(context)
@@ -64,37 +73,35 @@ class MedicationWidgetProvider : AppWidgetProvider() {
 
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
-        if (intent.action == ACTION_TAKE_FROM_WIDGET) {
-            val scheduleId = intent.getIntExtra(EXTRA_SCHEDULE_ID, -1)
-            if (scheduleId == -1) return
+        if (intent.action != ACTION_TAKE_FROM_WIDGET) return
 
-            val pending = goAsync()
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    val schedule = MedicationDatabase.getInstance(context).scheduleDao().getWithMedicationsById(scheduleId)
-                    if (schedule != null) {
-                        val result = ScheduleExecution.executeNow(context, schedule)
-                        withContext(Dispatchers.Main) {
-                            when {
-                                result.skippedDisabled -> Toast.makeText(context, context.getString(R.string.schedule_disabled_temporarily), Toast.LENGTH_SHORT).show()
-                                result.skippedDuplicate -> Toast.makeText(context, context.getString(R.string.duplicate_schedule_skipped), Toast.LENGTH_SHORT).show()
-                                else -> Toast.makeText(context, context.getString(R.string.taken_recorded_count, result.inserted), Toast.LENGTH_SHORT).show()
-                            }
-                        }
+        val scheduleIdRaw = intent.getIntExtra(EXTRA_SCHEDULE_ID, -1)
+        if (scheduleIdRaw <= 0) return
+
+        val pending = goAsync()
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val result = executeScheduleUseCase(ScheduleId(scheduleIdRaw), TakenAt.now())
+                withContext(Dispatchers.Main) {
+                    when {
+                        result.skippedDisabled -> Toast.makeText(context, context.getString(R.string.schedule_disabled_temporarily), Toast.LENGTH_SHORT).show()
+                        result.skippedDuplicate -> Toast.makeText(context, context.getString(R.string.duplicate_schedule_skipped), Toast.LENGTH_SHORT).show()
+                        result.skippedMissing -> Toast.makeText(context, context.getString(R.string.no_schedules), Toast.LENGTH_SHORT).show()
+                        else -> Toast.makeText(context, context.getString(R.string.taken_recorded_count, result.insertedCount), Toast.LENGTH_SHORT).show()
                     }
-                } catch (_: Exception) {
-                    // ignore
-                } finally {
-                    val awm = AppWidgetManager.getInstance(context)
-                    val cn = ComponentName(context, MedicationWidgetProvider::class.java)
-                    val ids = awm.getAppWidgetIds(cn)
-                    ids.forEach { id -> awm.notifyAppWidgetViewDataChanged(id, R.id.widget_list) }
-                    try {
-                        WidgetUtils.refreshHistoryWidgets(context)
-                    } catch (_: Exception) {
-                    }
-                    pending.finish()
                 }
+            } catch (_: Exception) {
+                // ignore
+            } finally {
+                val awm = AppWidgetManager.getInstance(context)
+                val cn = ComponentName(context, MedicationWidgetProvider::class.java)
+                val ids = awm.getAppWidgetIds(cn)
+                ids.forEach { id -> awm.notifyAppWidgetViewDataChanged(id, R.id.widget_list) }
+                try {
+                    WidgetUtils.refreshHistoryWidgets(context)
+                } catch (_: Exception) {
+                }
+                pending.finish()
             }
         }
     }
