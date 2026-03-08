@@ -1,8 +1,33 @@
 <resources>
     <string name="app_name">PreventForgettingMedicationAndroidApp</string>
-    <string name="hello_world">こんにちは世界！</string>
-    <string name="medication_list">薬一覧</string>
-    <string name="add_medication">薬の登録</string>
+
+    <string name="schedule_list">スケジュール一覧</string>
+    <string name="add_schedule">スケジュール登録</string>
+    <string name="schedule_registration">スケジュール登録</string>
+    <string name="schedule_name_hint">スケジュール名</string>
+    <string name="intake_slot">服用時間帯</string>
+    <string name="schedule_time">時刻</string>
+    <string name="linked_medications">紐づける薬</string>
+    <string name="schedule_saved">スケジュールを保存しました</string>
+    <string name="no_schedules">登録されたスケジュールがありません</string>
+    <string name="no_medications_selected">薬が選択されていません</string>
+    <string name="error_schedule_name_required">スケジュール名を入力してください</string>
+    <string name="error_select_at_least_one_medication">少なくとも1つ薬を選択してください</string>
+    <string name="confirm_delete_schedule">このスケジュールを削除しますか？</string>
+    <string name="duplicate_schedule_skipped">同じ時刻のスケジュール記録はスキップしました</string>
+    <string name="schedule_disabled_temporarily">このスケジュールは5分後に再記録できます</string>
+    <string name="taken_recorded_count">%1$d件の服薬を記録しました</string>
+
+    <string name="medication_master">薬マスタ</string>
+    <string name="add_medication_master">+ 薬を追加</string>
+    <string name="medication_master_edit">薬マスタ編集</string>
+    <string name="open_medication_master">薬マスタを開く</string>
+    <string name="settings_description">スケジュールで使用する薬マスタを管理します。</string>
+    <string name="confirm_delete_medication_master">この薬マスタを削除しますか？</string>
+    <string name="medication_delete_blocked_in_use">この薬はスケジュールで使用中のため削除できません</string>
+    <string name="error_medication_name_required">薬名を入力してください</string>
+    <string name="meal_timing_not_set">食事タイミング未設定</string>
+
     <string name="medication_name_hint">薬の名前</string>
     <string name="before_meal">食前</string>
     <string name="after_meal">食後</string>
@@ -10,41 +35,38 @@
     <string name="noon">昼</string>
     <string name="evening">夜</string>
     <string name="save">保存</string>
-    <string name="error_enter_name_select_times">名前を入力し、服用時間を選択してください</string>
-    <string name="medication_saved">お薬を保存しました</string>
-    <string name="no_medications">登録されたお薬がありません</string>
-    <string name="settings">設定</string>
-    <string name="settings_title">服用時刻の設定</string>
-    <string name="morning_time">朝の時刻</string>
-    <string name="noon_time">昼の時刻</string>
-    <string name="evening_time">夜の時刻</string>
-    <string name="settings_saved">保存しました</string>
-    <string name="notification_title">お薬リマインダー</string>
-    <string name="notification_message">%1$sに薬を飲む時間です</string>
-    <string name="notification_channel_name">お薬リマインダー</string>
-    <string name="notification_channel_desc">設定した服用時刻に通知します</string>
+    <string name="medication_saved">薬を保存しました</string>
+    <string name="no_medications">登録された薬がありません</string>
     <string name="take_button">飲んだ</string>
-    <string name="taken_recorded">飲んだ記録を保存しました</string>
     <string name="history">飲んだ履歴</string>
     <string name="history_empty">飲んだ履歴はまだありません</string>
     <string name="add">+ 追加</string>
+    <string name="select_schedule">スケジュールを選択</string>
     <string name="select_medications">薬を選択</string>
     <string name="select_date">日付を選択</string>
-    
-    <string name="no_medications_for_add">追加できるお薬がありません</string>
-    <string name="no_selection">少なくとも1つお薬を選択してください</string>
+    <string name="select_time">時刻を設定</string>
+    <string name="no_medications_for_add">追加できる薬がありません</string>
+    <string name="no_selection">選択してください</string>
     <string name="future_time_not_allowed">未来の日時は選べません</string>
-    <string name="history_saved">%1$d件を保存、%2$d件は重複のためスキップ</string>
+    <string name="history_saved">%1$d件を保存、%2$d件は重複でスキップ</string>
     <string name="manual_label">手動</string>
     <string name="mark_incorrect">誤登録</string>
     <string name="incorrect_marked">誤登録済</string>
+    <string name="legacy_history_group">旧履歴</string>
+    <string name="unknown_schedule">不明なスケジュール</string>
+
     <string name="memo">メモ</string>
     <string name="memo_hint">注意点や飲み方など</string>
     <string name="edit">編集</string>
     <string name="delete">削除</string>
-    <string name="confirm_delete">このお薬を削除しますか？</string>
-    <string name="widget_title">薬一覧</string>
-    <string name="use_app_times">朝昼夜の時刻設定を使う</string>
-    <string name="use_med_times">薬ごとに時刻を設定する</string>
-    <string name="select_time">時刻を設定</string>
+    <string name="widget_title">スケジュール一覧</string>
+    <string name="settings">設定</string>
+
+    <string name="notification_title">お薬リマインダー</string>
+    <string name="notification_message_schedule">%1$s: %2$s</string>
+    <string name="notification_channel_name">お薬リマインダー</string>
+    <string name="notification_channel_desc">設定した服用時刻に通知します</string>
+
+    <string name="ok">OK</string>
+    <string name="cancel">キャンセル</string>
 </resources>

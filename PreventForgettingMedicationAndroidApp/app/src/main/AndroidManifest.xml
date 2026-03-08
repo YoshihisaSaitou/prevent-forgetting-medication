@@ -28,6 +28,12 @@
             android:name=".MedicationRegistrationActivity"
             android:exported="false" />
         <activity
+            android:name=".MedicationMasterActivity"
+            android:exported="false" />
+        <activity
+            android:name=".MedicationMasterEditActivity"
+            android:exported="false" />
+        <activity
             android:name=".SettingsActivity"
             android:exported="false" />
         <activity
@@ -48,8 +54,8 @@
 
         <service
             android:name=".MedicationWidgetService"
-            android:permission="android.permission.BIND_REMOTEVIEWS"
-            android:exported="false" />
+            android:exported="false"
+            android:permission="android.permission.BIND_REMOTEVIEWS" />
 
         <receiver
             android:name=".HistoryWidgetProvider"
@@ -64,8 +70,8 @@
 
         <service
             android:name=".HistoryWidgetService"
-            android:permission="android.permission.BIND_REMOTEVIEWS"
-            android:exported="false" />
+            android:exported="false"
+            android:permission="android.permission.BIND_REMOTEVIEWS" />
 
         <receiver
             android:name=".NotificationReceiver"

@@ -9,10 +9,10 @@
         android:id="@+id/registration_scroll"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/footer_container"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/footer_container">
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -20,209 +20,104 @@
             android:orientation="vertical"
             android:padding="16dp">
 
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/schedule_registration"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
             <EditText
                 android:id="@+id/medication_name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/medication_name_hint" />
+                android:layout_marginTop="12dp"
+                android:hint="@string/schedule_name_hint" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/intake_slot" />
 
             <RadioGroup
-                android:id="@+id/meal_timing_group"
+                android:id="@+id/slot_group"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
 
                 <RadioButton
-                    android:id="@+id/before_meal"
+                    android:id="@+id/slot_morning"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/before_meal" />
+                    android:text="@string/morning" />
 
                 <RadioButton
-                    android:id="@+id/after_meal"
+                    android:id="@+id/slot_noon"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/after_meal" />
+                    android:text="@string/noon" />
+
+                <RadioButton
+                    android:id="@+id/slot_evening"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/evening" />
             </RadioGroup>
-
-            <!-- Time mode selection -->
-            <RadioGroup
-                android:id="@+id/time_mode_group"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginTop="12dp">
-                <RadioButton
-                    android:id="@+id/use_app_times"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/use_app_times" />
-                <RadioButton
-                    android:id="@+id/use_med_times"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/use_med_times" />
-            </RadioGroup>
-
-            <LinearLayout
-                android:id="@+id/default_med_time_container"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:visibility="gone"
-                android:layout_marginTop="8dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginBottom="4dp">
-                    <CheckBox
-                        android:id="@+id/slot_morning"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/morning" />
-                </LinearLayout>
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginBottom="4dp">
-                    <CheckBox
-                        android:id="@+id/slot_noon"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/noon" />
-                </LinearLayout>
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginBottom="4dp">
-                    <CheckBox
-                        android:id="@+id/slot_evening"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/evening" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <!-- Per-medication time inputs -->
-            <LinearLayout
-                android:id="@+id/per_med_time_container"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:visibility="gone"
-                android:layout_marginTop="8dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginBottom="4dp">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/morning" />
-                    <TextView
-                        android:id="@+id/med_time_morning"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:text="07:00"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:padding="6dp"
-                        android:background="@android:color/transparent" />
-                    <Button
-                        android:id="@+id/btn_time_morning"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/select_time"
-                        android:layout_marginStart="12dp" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginBottom="4dp">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/noon" />
-                    <TextView
-                        android:id="@+id/med_time_noon"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:text="12:00"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:padding="6dp"
-                        android:background="@android:color/transparent" />
-                    <Button
-                        android:id="@+id/btn_time_noon"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/select_time"
-                        android:layout_marginStart="12dp" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/evening" />
-                    <TextView
-                        android:id="@+id/med_time_evening"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:text="19:00"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:padding="6dp"
-                        android:background="@android:color/transparent" />
-                    <Button
-                        android:id="@+id/btn_time_evening"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/select_time"
-                        android:layout_marginStart="12dp" />
-                </LinearLayout>
-            </LinearLayout>
 
             <TextView
-                android:id="@+id/memo_label"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="@string/memo" />
+                android:text="@string/schedule_time" />
 
-            <EditText
-                android:id="@+id/memo_edit"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="120dp"
-                android:gravity="top|start"
-                android:inputType="textMultiLine"
-                android:hint="@string/memo_hint" />
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-        <Button
-            android:id="@+id/save_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/save" />
+                <TextView
+                    android:id="@+id/selected_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="07:00"
+                    android:textSize="18sp" />
+
+                <Button
+                    android:id="@+id/btn_pick_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:text="@string/select_time" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/linked_medications" />
+
+            <Button
+                android:id="@+id/btn_select_medications"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/select_medications" />
+
+            <TextView
+                android:id="@+id/selected_medications"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/no_medications_selected"
+                android:textColor="@android:color/darker_gray" />
+
+            <Button
+                android:id="@+id/save_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/save" />
         </LinearLayout>
     </ScrollView>
 
@@ -231,9 +126,9 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent">
+        app:layout_constraintStart_toStartOf="parent">
 
         <include layout="@layout/include_footer_menu" />
     </LinearLayout>

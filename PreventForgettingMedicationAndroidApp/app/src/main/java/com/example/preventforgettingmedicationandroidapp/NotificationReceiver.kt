@@ -12,62 +12,55 @@ import androidx.core.app.NotificationCompat
 
 class NotificationReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        // If there are no registered medications or no meds for this slot, do not notify
-        val dao = MedicationDatabase.getInstance(context).medicationDao()
-        val meds = try { dao.getAllSync() } catch (_: Exception) { emptyList() }
-        if (meds.isEmpty()) {
-            AlarmScheduler.cancelAll(context)
-            return
-        }
-        val slotName = intent.getStringExtra("slot") ?: IntakeSlot.MORNING.name
-        val slot = IntakeSlot.valueOf(slotName)
-        if (meds.none { it.timing.contains(slot) }) {
-            // No longer need this slot
+        val scheduleId = intent.getIntExtra("schedule_id", -1)
+        if (scheduleId == -1) {
             AlarmScheduler.scheduleAll(context)
             return
         }
 
-        val channelId = CHANNEL_ID
-        ensureChannel(context, channelId)
-
-        val title = when (slot) {
-            IntakeSlot.MORNING -> context.getString(R.string.morning)
-            IntakeSlot.NOON -> context.getString(R.string.noon)
-            IntakeSlot.EVENING -> context.getString(R.string.evening)
+        val scheduleDao = MedicationDatabase.getInstance(context).scheduleDao()
+        val scheduleWithMeds = try {
+            scheduleDao.getWithMedicationsByIdSync(scheduleId)
+        } catch (_: Exception) {
+            null
         }
-        val message = context.getString(R.string.notification_message, title)
+
+        if (scheduleWithMeds == null || scheduleWithMeds.medications.isEmpty() || !scheduleWithMeds.schedule.isActive) {
+            AlarmScheduler.scheduleAll(context)
+            return
+        }
+
+        ensureChannel(context, CHANNEL_ID)
+
+        val medsPreview = scheduleWithMeds.medications.take(3).joinToString(", ") { it.name }
+        val title = context.getString(R.string.notification_title)
+        val message = context.getString(
+            R.string.notification_message_schedule,
+            scheduleWithMeds.schedule.name,
+            medsPreview
+        )
 
         val tapIntent = Intent(context, MainActivity::class.java)
         val tapPi = PendingIntent.getActivity(
             context,
-            0,
+            scheduleId,
             tapIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val notification = NotificationCompat.Builder(context, channelId)
+        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle(context.getString(R.string.notification_title))
+            .setContentTitle(title)
             .setContentText(message)
             .setAutoCancel(true)
             .setContentIntent(tapPi)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .build()
-        nm.notify(slot.ordinal + 1, notification)
 
-        // Schedule next day for this slot again
-        val minutes = when (slot) {
-            IntakeSlot.MORNING -> TimePreferences.getMorningMinutes(context)
-            IntakeSlot.NOON -> TimePreferences.getNoonMinutes(context)
-            IntakeSlot.EVENING -> TimePreferences.getEveningMinutes(context)
-        }
-        // Reschedule using the same requestCode mapping
-        when (slot) {
-            IntakeSlot.MORNING -> AlarmScheduler.scheduleAll(context) // simple: reschedule all
-            IntakeSlot.NOON -> AlarmScheduler.scheduleAll(context)
-            IntakeSlot.EVENING -> AlarmScheduler.scheduleAll(context)
-        }
+        nm.notify(scheduleId, notification)
+
+        AlarmScheduler.scheduleAll(context)
     }
 
     private fun ensureChannel(context: Context, channelId: String) {
@@ -93,3 +86,4 @@ class NotificationReceiver : BroadcastReceiver() {
         const val CHANNEL_ID = "medication_reminders"
     }
 }
+

@@ -7,18 +7,22 @@ import android.widget.RemoteViews
 import android.widget.RemoteViewsService
 
 class MedicationWidgetService : RemoteViewsService() {
-    override fun onGetViewFactory(intent: Intent): RemoteViewsFactory = Factory(applicationContext, intent)
+    override fun onGetViewFactory(intent: Intent): RemoteViewsFactory = Factory(applicationContext)
 
-    private class Factory(private val context: Context, intent: Intent) : RemoteViewsFactory {
-        private var items: List<Medication> = emptyList()
+    private class Factory(private val context: Context) : RemoteViewsFactory {
+        private var items: List<ScheduleWithMedications> = emptyList()
 
         override fun onCreate() {}
 
         override fun onDataSetChanged() {
             val token = Binder.clearCallingIdentity()
             try {
-                val dao = MedicationDatabase.getInstance(context).medicationDao()
-                items = try { dao.getAllSync() } catch (_: Exception) { emptyList() }
+                val dao = MedicationDatabase.getInstance(context).scheduleDao()
+                items = try {
+                    dao.getAllWithMedicationsSync()
+                } catch (_: Exception) {
+                    emptyList()
+                }
             } finally {
                 Binder.restoreCallingIdentity(token)
             }
@@ -32,41 +36,41 @@ class MedicationWidgetService : RemoteViewsService() {
 
         override fun getViewAt(position: Int): RemoteViews? {
             if (position < 0 || position >= items.size) return null
-            val med = items[position]
+
+            val item = items[position]
+            val schedule = item.schedule
+            val meds = item.medications
+
             val rv = RemoteViews(context.packageName, R.layout.medication_widget_item)
-            rv.setTextViewText(R.id.widget_item_name, med.name)
+            rv.setTextViewText(R.id.widget_item_name, schedule.name)
 
-            // Build time slot details like "朝 07:00, 昼 12:00, 夜 19:00"
-            fun minutesFor(slot: IntakeSlot): Int = when (slot) {
-                IntakeSlot.MORNING -> med.morningMinutes ?: TimePreferences.getMorningMinutes(context)
-                IntakeSlot.NOON -> med.noonMinutes ?: TimePreferences.getNoonMinutes(context)
-                IntakeSlot.EVENING -> med.eveningMinutes ?: TimePreferences.getEveningMinutes(context)
+            val slotLabel = when (schedule.slot) {
+                IntakeSlot.MORNING -> context.getString(R.string.morning)
+                IntakeSlot.NOON -> context.getString(R.string.noon)
+                IntakeSlot.EVENING -> context.getString(R.string.evening)
             }
-            val details = med.timing.map { slot ->
-                val label = when (slot) {
-                    IntakeSlot.MORNING -> context.getString(R.string.morning)
-                    IntakeSlot.NOON -> context.getString(R.string.noon)
-                    IntakeSlot.EVENING -> context.getString(R.string.evening)
-                }
-                "$label ${TimePreferences.formatMinutes(minutesFor(slot))}"
-            }.joinToString(", ")
-            rv.setTextViewText(R.id.widget_item_details, if (details.isNotEmpty()) details else "")
+            val medsSummary = meds.joinToString(", ") { it.name }
+            rv.setTextViewText(
+                R.id.widget_item_details,
+                "$slotLabel ${TimePreferences.formatMinutes(schedule.timeMinutes)} | $medsSummary"
+            )
 
-            val enabled = TakenStateStore.isEnabled(context, med.id)
+            val enabled = TakenStateStore.isEnabled(context, schedule.id)
             rv.setBoolean(R.id.widget_btn_take, "setEnabled", enabled)
 
-            // Fill-in intent for "Taken" button
             val fillIn = Intent().apply {
-                putExtra(MedicationWidgetProvider.EXTRA_MED_ID, med.id)
-                putExtra(MedicationWidgetProvider.EXTRA_MED_NAME, med.name)
+                putExtra(MedicationWidgetProvider.EXTRA_SCHEDULE_ID, schedule.id)
             }
             rv.setOnClickFillInIntent(R.id.widget_btn_take, fillIn)
             return rv
         }
 
         override fun getLoadingView(): RemoteViews? = null
+
         override fun getViewTypeCount(): Int = 1
-        override fun getItemId(position: Int): Long = items.getOrNull(position)?.id?.toLong() ?: position.toLong()
+
+        override fun getItemId(position: Int): Long = items.getOrNull(position)?.schedule?.id?.toLong() ?: position.toLong()
+
         override fun hasStableIds(): Boolean = true
     }
 }

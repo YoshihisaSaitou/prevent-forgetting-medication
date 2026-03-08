@@ -10,6 +10,12 @@ class Converters {
     fun toMealTiming(value: String?): MealTiming? = value?.let { MealTiming.valueOf(it) }
 
     @TypeConverter
+    fun fromIntakeSlot(value: IntakeSlot): String = value.name
+
+    @TypeConverter
+    fun toIntakeSlot(value: String): IntakeSlot = IntakeSlot.valueOf(value)
+
+    @TypeConverter
     fun fromIntakeSlots(slots: Set<IntakeSlot>): String =
         slots.joinToString(",") { it.name }
 

@@ -6,140 +6,117 @@ import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
+import android.widget.BaseAdapter
 import android.widget.Button
 import android.widget.TextView
-import android.os.Handler
-import android.os.Looper
-import kotlinx.coroutines.CoroutineScope
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class MedicationAdapter(
-    context: Context,
-    private val medications: List<Medication>
-) : ArrayAdapter<Medication>(context, 0, medications) {
+    private val context: Context,
+    private val items: MutableList<ScheduleWithMedications>
+) : BaseAdapter() {
+
+    fun setItems(newItems: List<ScheduleWithMedications>) {
+        items.clear()
+        items.addAll(newItems)
+        notifyDataSetChanged()
+    }
+
+    override fun getCount(): Int = items.size
+
+    override fun getItem(position: Int): ScheduleWithMedications = items[position]
+
+    override fun getItemId(position: Int): Long = items[position].schedule.id.toLong()
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
         val view = convertView ?: LayoutInflater.from(context)
             .inflate(R.layout.item_medication, parent, false)
 
-        val medication = getItem(position)
-        medication?.let { med ->
-            val nameTextView = view.findViewById<TextView>(R.id.med_name)
-            val detailsTextView = view.findViewById<TextView>(R.id.med_details)
-            val takeButton = view.findViewById<Button>(R.id.btn_take)
-            val editButton = view.findViewById<Button>(R.id.btn_edit)
-            val deleteButton = view.findViewById<Button>(R.id.btn_delete)
+        val scheduleWithMeds = getItem(position)
+        val schedule = scheduleWithMeds.schedule
+        val meds = scheduleWithMeds.medications
 
-            nameTextView.text = med.name
-            
-            val details = buildString {
-                // 食事タイミング
-                when (med.mealTiming) {
-                    MealTiming.BEFORE_MEAL -> append("食前")
-                    MealTiming.AFTER_MEAL -> append("食後")
-                    null -> append("食事タイミング未設定")
-                }
-                
-                append(" | ")
-                
-                // 服用時間帯
-                fun minutesFor(slot: IntakeSlot): Int = when (slot) {
-                    IntakeSlot.MORNING -> med.morningMinutes ?: TimePreferences.getMorningMinutes(context)
-                    IntakeSlot.NOON -> med.noonMinutes ?: TimePreferences.getNoonMinutes(context)
-                    IntakeSlot.EVENING -> med.eveningMinutes ?: TimePreferences.getEveningMinutes(context)
-                }
-                val timeSlots = med.timing.map { slot ->
-                    when (slot) {
-                        IntakeSlot.MORNING -> {
-                            val t = TimePreferences.formatMinutes(minutesFor(slot))
-                            "朝 $t"
+        val nameTextView = view.findViewById<TextView>(R.id.med_name)
+        val detailsTextView = view.findViewById<TextView>(R.id.med_details)
+        val takeButton = view.findViewById<Button>(R.id.btn_take)
+        val editButton = view.findViewById<Button>(R.id.btn_edit)
+        val deleteButton = view.findViewById<Button>(R.id.btn_delete)
+
+        nameTextView.text = schedule.name
+
+        val slotLabel = when (schedule.slot) {
+            IntakeSlot.MORNING -> context.getString(R.string.morning)
+            IntakeSlot.NOON -> context.getString(R.string.noon)
+            IntakeSlot.EVENING -> context.getString(R.string.evening)
+        }
+        val medsSummary = if (meds.isEmpty()) {
+            context.getString(R.string.no_medications)
+        } else {
+            meds.joinToString(", ") { it.name }
+        }
+        detailsTextView.text = "$slotLabel ${TimePreferences.formatMinutes(schedule.timeMinutes)} | $medsSummary"
+
+        val enabled = TakenStateStore.isEnabled(context, schedule.id)
+        takeButton.isEnabled = enabled
+        takeButton.alpha = if (enabled) 1f else 0.5f
+
+        takeButton.setOnClickListener {
+            val activity = context as? AppCompatActivity ?: return@setOnClickListener
+            activity.lifecycleScope.launch(Dispatchers.IO) {
+                val result = ScheduleExecution.executeNow(context, scheduleWithMeds)
+                withContext(Dispatchers.Main) {
+                    when {
+                        result.skippedDisabled -> {
+                            Toast.makeText(context, context.getString(R.string.schedule_disabled_temporarily), Toast.LENGTH_SHORT).show()
                         }
-                        IntakeSlot.NOON -> {
-                            val t = TimePreferences.formatMinutes(minutesFor(slot))
-                            "昼 $t"
+                        result.skippedDuplicate -> {
+                            Toast.makeText(context, context.getString(R.string.duplicate_schedule_skipped), Toast.LENGTH_SHORT).show()
                         }
-                        IntakeSlot.EVENING -> {
-                            val t = TimePreferences.formatMinutes(minutesFor(slot))
-                            "夕 $t"
+                        else -> {
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.taken_recorded_count, result.inserted),
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
                     }
-                }
-                
-                if (timeSlots.isNotEmpty()) {
-                    append(timeSlots.joinToString(", "))
-                } else {
-                    append("服用時間未設定")
+                    notifyDataSetChanged()
                 }
             }
-            
-            detailsTextView.text = details
+        }
 
-            // Apply disabled state based on last taken time
-            val enabled = TakenStateStore.isEnabled(context, med.id)
-            takeButton.isEnabled = enabled
-            takeButton.alpha = if (enabled) 1f else 0.5f
+        editButton.setOnClickListener {
+            val intent = Intent(context, MedicationRegistrationActivity::class.java)
+            intent.putExtra("SCHEDULE_ID", schedule.id)
+            context.startActivity(intent)
+        }
 
-            takeButton.setOnClickListener {
-                val dao = MedicationDatabase.getInstance(context).intakeHistoryDao()
-                val now = System.currentTimeMillis()
-                val entry = IntakeHistory(
-                    medicationId = med.id,
-                    medicationName = med.name,
-                    takenAt = now,
-                    createdAt = now
-                )
-                // Immediately disable for 5 minutes in UI and persist state
-                TakenStateStore.setDisabledForFiveMinutes(context, med.id)
-                takeButton.isEnabled = false
-                takeButton.alpha = 0.5f
-                CoroutineScope(Dispatchers.IO).launch {
-                    dao.insert(entry)
-                    withContext(Dispatchers.Main) {
-                        android.widget.Toast.makeText(
-                            context,
-                            context.getString(R.string.taken_recorded),
-                            android.widget.Toast.LENGTH_SHORT
-                        ).show()
+        deleteButton.setOnClickListener {
+            AlertDialog.Builder(context)
+                .setMessage(context.getString(R.string.confirm_delete_schedule))
+                .setPositiveButton(android.R.string.ok) { _, _ ->
+                    val activity = context as? AppCompatActivity ?: return@setPositiveButton
+                    activity.lifecycleScope.launch(Dispatchers.IO) {
+                        val scheduleDao = MedicationDatabase.getInstance(context).scheduleDao()
+                        scheduleDao.deleteCrossRefsForSchedule(schedule.id)
+                        scheduleDao.deleteById(schedule.id)
+                        AlarmScheduler.scheduleAll(context)
                         WidgetUtils.refreshMedicationWidgets(context)
-                        WidgetUtils.refreshHistoryWidgets(context)
-                        // Schedule a refresh after 5 minutes to re-enable if this row is visible
-                        Handler(Looper.getMainLooper()).postDelayed({
+                        withContext(Dispatchers.Main) {
+                            items.removeAt(position)
                             notifyDataSetChanged()
-                            WidgetUtils.refreshMedicationWidgets(context)
-                            WidgetUtils.refreshHistoryWidgets(context)
-                        }, 5 * 60 * 1000L)
-                    }
-                }
-            }
-
-            editButton.setOnClickListener {
-                val intent = Intent(context, MedicationRegistrationActivity::class.java)
-                intent.putExtra("MED_ID", med.id)
-                context.startActivity(intent)
-            }
-
-            deleteButton.setOnClickListener {
-                AlertDialog.Builder(context)
-                    .setMessage(context.getString(R.string.confirm_delete))
-                    .setPositiveButton(android.R.string.ok) { _, _ ->
-                        val medDao = MedicationDatabase.getInstance(context).medicationDao()
-                        CoroutineScope(Dispatchers.IO).launch {
-                            medDao.delete(med)
-                            withContext(Dispatchers.Main) {
-                                remove(med)
-                                notifyDataSetChanged()
-                                WidgetUtils.refreshMedicationWidgets(context)
-                            }
                         }
                     }
-                    .setNegativeButton(android.R.string.cancel, null)
-                    .show()
-            }
+                }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
         }
 
         return view
     }
-} 
+}

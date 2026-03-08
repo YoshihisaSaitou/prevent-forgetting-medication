@@ -9,13 +9,16 @@ import androidx.room.Update
 @Dao
 interface MedicationDao {
     @Insert
-    suspend fun insert(medication: Medication)
+    suspend fun insert(medication: Medication): Long
 
     @Update
     suspend fun update(medication: Medication)
 
-    @Query("SELECT * FROM medications")
+    @Query("SELECT * FROM medications ORDER BY name ASC")
     suspend fun getAll(): List<Medication>
+
+    @Query("SELECT * FROM medications ORDER BY name ASC")
+    fun getAllSync(): List<Medication>
 
     @Query("SELECT * FROM medications WHERE id = :id")
     suspend fun getById(id: Int): Medication?
@@ -26,7 +29,6 @@ interface MedicationDao {
     @Query("SELECT COUNT(*) FROM medications")
     fun countAll(): Int
 
-    // Synchronous accessor for schedulers/receivers
-    @Query("SELECT * FROM medications")
-    fun getAllSync(): List<Medication>
+    @Query("SELECT COUNT(*) FROM schedule_medications WHERE medicationId = :medicationId")
+    suspend fun countScheduleReferences(medicationId: Int): Int
 }

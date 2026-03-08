@@ -4,24 +4,24 @@ import android.content.Context
 
 object TakenStateStore {
     private const val PREFS = "taken_state"
+
     private fun prefs(context: Context) =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
-    private fun key(medId: Int) = "med_disabled_until_$medId"
+    private fun key(scheduleId: Int) = "schedule_disabled_until_$scheduleId"
 
-    fun getDisabledUntil(context: Context, medId: Int): Long =
-        prefs(context).getLong(key(medId), 0L)
+    fun getDisabledUntil(context: Context, scheduleId: Int): Long =
+        prefs(context).getLong(key(scheduleId), 0L)
 
-    fun setDisabledForFiveMinutes(context: Context, medId: Int) {
+    fun setDisabledForFiveMinutes(context: Context, scheduleId: Int) {
         val until = System.currentTimeMillis() + 5 * 60 * 1000L
-        prefs(context).edit().putLong(key(medId), until).apply()
+        prefs(context).edit().putLong(key(scheduleId), until).apply()
     }
 
-    fun clearDisabled(context: Context, medId: Int) {
-        prefs(context).edit().remove(key(medId)).apply()
+    fun clearDisabled(context: Context, scheduleId: Int) {
+        prefs(context).edit().remove(key(scheduleId)).apply()
     }
 
-    fun isEnabled(context: Context, medId: Int): Boolean =
-        System.currentTimeMillis() >= getDisabledUntil(context, medId)
+    fun isEnabled(context: Context, scheduleId: Int): Boolean =
+        System.currentTimeMillis() >= getDisabledUntil(context, scheduleId)
 }
-

@@ -7,75 +7,67 @@ import android.content.Intent
 import java.util.Calendar
 
 object AlarmScheduler {
-    private const val REQ_MORNING = 1001
-    private const val REQ_NOON = 1002
-    private const val REQ_EVENING = 1003
+    private const val PREFS = "schedule_alarm_state"
+    private const val KEY_SCHEDULE_IDS = "scheduled_ids"
+    private const val ACTION_REMIND_SCHEDULE = "com.example.preventforgettingmedicationandroidapp.REMIND_SCHEDULE"
 
     fun scheduleAll(context: Context) {
-        val dao = MedicationDatabase.getInstance(context).medicationDao()
-        val meds = try { dao.getAllSync() } catch (_: Exception) { emptyList() }
-        cancelAll(context)
-        if (meds.isEmpty()) return
+        val dao = MedicationDatabase.getInstance(context).scheduleDao()
+        val schedules = try {
+            dao.getActiveSchedulesSync()
+        } catch (_: Exception) {
+            emptyList()
+        }
 
-        val needsMorning = meds.any { it.timing.contains(IntakeSlot.MORNING) }
-        val needsNoon = meds.any { it.timing.contains(IntakeSlot.NOON) }
-        val needsEvening = meds.any { it.timing.contains(IntakeSlot.EVENING) }
+        cancelStored(context)
+        if (schedules.isEmpty()) {
+            saveScheduledIds(context, emptySet())
+            return
+        }
 
-        if (needsMorning) {
-            scheduleFor(context, IntakeSlot.MORNING, TimePreferences.getMorningMinutes(context), REQ_MORNING)
-        } else {
-            cancel(context, REQ_MORNING)
+        val ids = mutableSetOf<Int>()
+        schedules.forEach { schedule ->
+            scheduleFor(context, schedule.id, schedule.timeMinutes)
+            ids.add(schedule.id)
         }
-        if (needsNoon) {
-            scheduleFor(context, IntakeSlot.NOON, TimePreferences.getNoonMinutes(context), REQ_NOON)
-        } else {
-            cancel(context, REQ_NOON)
-        }
-        if (needsEvening) {
-            scheduleFor(context, IntakeSlot.EVENING, TimePreferences.getEveningMinutes(context), REQ_EVENING)
-        } else {
-            cancel(context, REQ_EVENING)
-        }
+        saveScheduledIds(context, ids)
     }
 
     fun cancelAll(context: Context) {
-        cancel(context, REQ_MORNING)
-        cancel(context, REQ_NOON)
-        cancel(context, REQ_EVENING)
+        cancelStored(context)
+        saveScheduledIds(context, emptySet())
     }
 
-    private fun scheduleFor(context: Context, slot: IntakeSlot, minutes: Int, requestCode: Int) {
+    private fun scheduleFor(context: Context, scheduleId: Int, minutes: Int) {
         val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val pi = pendingIntent(context, slot, requestCode)
+        val pi = pendingIntent(context, scheduleId)
+        val triggerAt = nextTriggerTime(minutes).timeInMillis
 
-        val cal = nextTriggerTime(minutes)
-        val triggerAt = cal.timeInMillis
-
-        // Use setExactAndAllowWhileIdle for timely alarms; reschedule next occurrence on receive
         try {
             am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi)
         } catch (_: SecurityException) {
-            // Fallback if exact not permitted
             am.set(AlarmManager.RTC_WAKEUP, triggerAt, pi)
         }
     }
 
-    private fun cancel(context: Context, requestCode: Int) {
+    private fun cancelStored(context: Context) {
+        loadScheduledIds(context).forEach { cancel(context, it) }
+    }
+
+    private fun cancel(context: Context, scheduleId: Int) {
         val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val intent = Intent(context, NotificationReceiver::class.java)
-        val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        val pi = PendingIntent.getBroadcast(context, requestCode, intent, flags)
+        val pi = pendingIntent(context, scheduleId)
         am.cancel(pi)
         pi.cancel()
     }
 
-    private fun pendingIntent(context: Context, slot: IntakeSlot, requestCode: Int): PendingIntent {
+    private fun pendingIntent(context: Context, scheduleId: Int): PendingIntent {
         val intent = Intent(context, NotificationReceiver::class.java).apply {
-            action = "com.example.preventforgettingmedicationandroidapp.REMIND_${slot.name}"
-            putExtra("slot", slot.name)
+            action = ACTION_REMIND_SCHEDULE
+            putExtra("schedule_id", scheduleId)
         }
         val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        return PendingIntent.getBroadcast(context, requestCode, intent, flags)
+        return PendingIntent.getBroadcast(context, scheduleId, intent, flags)
     }
 
     private fun nextTriggerTime(minutes: Int): Calendar {
@@ -92,5 +84,19 @@ object AlarmScheduler {
             cal.add(Calendar.DAY_OF_YEAR, 1)
         }
         return cal
+    }
+
+    private fun prefs(context: Context) =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+
+    private fun saveScheduledIds(context: Context, ids: Set<Int>) {
+        val data = ids.joinToString(",")
+        prefs(context).edit().putString(KEY_SCHEDULE_IDS, data).apply()
+    }
+
+    private fun loadScheduledIds(context: Context): Set<Int> {
+        val data = prefs(context).getString(KEY_SCHEDULE_IDS, "") ?: ""
+        if (data.isBlank()) return emptySet()
+        return data.split(",").mapNotNull { it.toIntOrNull() }.toSet()
     }
 }

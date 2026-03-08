@@ -1,8 +1,33 @@
 <resources>
     <string name="app_name">PreventForgettingMedicationAndroidApp</string>
-    <string name="hello_world">Hello World!</string>
-    <string name="medication_list">Medications</string>
-    <string name="add_medication">Add Medication</string>
+
+    <string name="schedule_list">Schedules</string>
+    <string name="add_schedule">Add Schedule</string>
+    <string name="schedule_registration">Schedule Registration</string>
+    <string name="schedule_name_hint">Schedule name</string>
+    <string name="intake_slot">Intake slot</string>
+    <string name="schedule_time">Schedule time</string>
+    <string name="linked_medications">Linked medications</string>
+    <string name="schedule_saved">Schedule saved</string>
+    <string name="no_schedules">No schedules registered yet</string>
+    <string name="no_medications_selected">No medications selected</string>
+    <string name="error_schedule_name_required">Please enter a schedule name</string>
+    <string name="error_select_at_least_one_medication">Please select at least one medication</string>
+    <string name="confirm_delete_schedule">Delete this schedule?</string>
+    <string name="duplicate_schedule_skipped">Duplicate schedule record was skipped</string>
+    <string name="schedule_disabled_temporarily">This schedule can be recorded again in 5 minutes</string>
+    <string name="taken_recorded_count">Recorded %1$d medication(s)</string>
+
+    <string name="medication_master">Medication Master</string>
+    <string name="add_medication_master">+ Add Medication</string>
+    <string name="medication_master_edit">Medication Master Edit</string>
+    <string name="open_medication_master">Open Medication Master</string>
+    <string name="settings_description">Manage medication definitions used by schedules.</string>
+    <string name="confirm_delete_medication_master">Delete this medication master?</string>
+    <string name="medication_delete_blocked_in_use">This medication is used by schedules and cannot be deleted</string>
+    <string name="error_medication_name_required">Please enter medication name</string>
+    <string name="meal_timing_not_set">Meal timing not set</string>
+
     <string name="medication_name_hint">Medication name</string>
     <string name="before_meal">Before Meal</string>
     <string name="after_meal">After Meal</string>
@@ -10,40 +35,38 @@
     <string name="noon">Noon</string>
     <string name="evening">Evening</string>
     <string name="save">Save</string>
-    <string name="error_enter_name_select_times">Please enter name and select intake times</string>
     <string name="medication_saved">Medication saved</string>
     <string name="no_medications">No medications registered yet</string>
     <string name="take_button">Taken</string>
-    <string name="taken_recorded">Taken recorded</string>
     <string name="history">History</string>
     <string name="history_empty">No intake history yet</string>
     <string name="add">+ Add</string>
+    <string name="select_schedule">Select schedule</string>
     <string name="select_medications">Select medications</string>
     <string name="select_date">Select date</string>
+    <string name="select_time">Set time</string>
     <string name="no_medications_for_add">No medications to add</string>
-    <string name="no_selection">Please select at least one medication</string>
+    <string name="no_selection">Please make a selection</string>
     <string name="future_time_not_allowed">Future time is not allowed</string>
     <string name="history_saved">Saved %1$d, skipped %2$d duplicate(s)</string>
     <string name="manual_label">Manual</string>
     <string name="mark_incorrect">Mark incorrect</string>
     <string name="incorrect_marked">Incorrect</string>
+    <string name="legacy_history_group">Legacy record</string>
+    <string name="unknown_schedule">Unknown schedule</string>
+
     <string name="memo">Memo</string>
     <string name="memo_hint">Notes, dosage tips, etc.</string>
     <string name="edit">Edit</string>
     <string name="delete">Delete</string>
-    <string name="confirm_delete">Delete this medication?</string>
-    <string name="widget_title">Medications</string>
+    <string name="widget_title">Schedules</string>
     <string name="settings">Settings</string>
-    <string name="settings_title">Medication times</string>
-    <string name="morning_time">Morning time</string>
-    <string name="noon_time">Noon time</string>
-    <string name="evening_time">Evening time</string>
-    <string name="settings_saved">Saved</string>
+
     <string name="notification_title">Medication Reminder</string>
-    <string name="notification_message">Time to take your %1$s medicine</string>
+    <string name="notification_message_schedule">%1$s: %2$s</string>
     <string name="notification_channel_name">Medication reminders</string>
     <string name="notification_channel_desc">Notifications for scheduled medication times</string>
-    <string name="use_app_times">Use app time settings</string>
-    <string name="use_med_times">Set times per medication</string>
-    <string name="select_time">Set time</string>
+
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
 </resources>

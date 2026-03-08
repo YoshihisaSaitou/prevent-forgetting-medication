@@ -20,25 +20,58 @@
             android:padding="16dp">
 
             <TextView
-                android:id="@+id/settings_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/settings"
-                android:textSize="22sp"
+                android:text="@string/medication_master_edit"
+                android:textSize="20sp"
                 android:textStyle="bold" />
+
+            <EditText
+                android:id="@+id/medication_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:hint="@string/medication_name_hint" />
+
+            <RadioGroup
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
+
+                <RadioButton
+                    android:id="@+id/before_meal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/before_meal" />
+
+                <RadioButton
+                    android:id="@+id/after_meal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/after_meal" />
+            </RadioGroup>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:text="@string/settings_description" />
+                android:text="@string/memo" />
+
+            <EditText
+                android:id="@+id/memo_edit"
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:gravity="top|start"
+                android:hint="@string/memo_hint"
+                android:inputType="textMultiLine" />
 
             <Button
-                android:id="@+id/manage_medications_button"
+                android:id="@+id/save_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
-                android:text="@string/open_medication_master" />
+                android:text="@string/save" />
         </LinearLayout>
     </ScrollView>
 

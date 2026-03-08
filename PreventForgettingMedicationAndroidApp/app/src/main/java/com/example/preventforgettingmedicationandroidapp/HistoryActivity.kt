@@ -1,29 +1,28 @@
 package com.example.preventforgettingmedicationandroidapp
 
-import android.content.Intent
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
-import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
+import android.content.Intent
 import android.os.Bundle
-import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.ListView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Calendar
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 class HistoryActivity : AppCompatActivity() {
-    private val dao by lazy { MedicationDatabase.getInstance(this).intakeHistoryDao() }
-    private val medDao by lazy { MedicationDatabase.getInstance(this).medicationDao() }
+    private val db by lazy { MedicationDatabase.getInstance(this) }
+    private val dao by lazy { db.intakeHistoryDao() }
+    private val scheduleDao by lazy { db.scheduleDao() }
     private lateinit var adapter: HistoryListAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -45,7 +44,6 @@ class HistoryActivity : AppCompatActivity() {
             startAddFlow()
         }
 
-        // Footer menu
         findViewById<Button>(R.id.footer_add).setOnClickListener {
             startActivity(Intent(this, MedicationRegistrationActivity::class.java))
         }
@@ -62,43 +60,53 @@ class HistoryActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        lifecycleScope.launch {
+        lifecycleScope.launch(Dispatchers.IO) {
             val items = dao.getAll()
-            adapter.setItems(items)
+            withContext(Dispatchers.Main) {
+                adapter.setItems(items)
+            }
         }
     }
 
     private fun startAddFlow() {
-        lifecycleScope.launch {
-            val medications = medDao.getAll()
-            if (medications.isEmpty()) {
-                Toast.makeText(this@HistoryActivity, getString(R.string.no_medications_for_add), Toast.LENGTH_SHORT).show()
+        lifecycleScope.launch(Dispatchers.IO) {
+            val schedules = scheduleDao.getAllWithMedications()
+            if (schedules.isEmpty()) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@HistoryActivity, getString(R.string.no_schedules), Toast.LENGTH_SHORT).show()
+                }
                 return@launch
             }
 
-            val names = medications.map { it.name }.toTypedArray()
-            val checked = BooleanArray(medications.size)
+            val labels = schedules.map {
+                val slot = when (it.schedule.slot) {
+                    IntakeSlot.MORNING -> getString(R.string.morning)
+                    IntakeSlot.NOON -> getString(R.string.noon)
+                    IntakeSlot.EVENING -> getString(R.string.evening)
+                }
+                "${it.schedule.name} ($slot ${TimePreferences.formatMinutes(it.schedule.timeMinutes)})"
+            }.toTypedArray()
 
-            AlertDialog.Builder(this@HistoryActivity)
-                .setTitle(getString(R.string.select_medications))
-                .setMultiChoiceItems(names, checked) { _, which, isChecked ->
-                    checked[which] = isChecked
-                }
-                .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                    dialog.dismiss()
-                    val selected = medications.filterIndexed { index, _ -> checked[index] }
-                    if (selected.isEmpty()) {
-                        Toast.makeText(this@HistoryActivity, getString(R.string.no_selection), Toast.LENGTH_SHORT).show()
-                        return@setPositiveButton
+            withContext(Dispatchers.Main) {
+                var selectedIndex = -1
+                AlertDialog.Builder(this@HistoryActivity)
+                    .setTitle(getString(R.string.select_schedule))
+                    .setSingleChoiceItems(labels, -1) { _, which -> selectedIndex = which }
+                    .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                        dialog.dismiss()
+                        if (selectedIndex < 0) {
+                            Toast.makeText(this@HistoryActivity, getString(R.string.no_selection), Toast.LENGTH_SHORT).show()
+                            return@setPositiveButton
+                        }
+                        pickDateTimeAndSave(schedules[selectedIndex])
                     }
-                    pickDateTimeAndSave(selected.map { it.id to it.name })
-                }
-                .setNegativeButton(android.R.string.cancel, null)
-                .show()
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show()
+            }
         }
     }
 
-    private fun pickDateTimeAndSave(selectedMeds: List<Pair<Int, String>>) {
+    private fun pickDateTimeAndSave(scheduleWithMeds: ScheduleWithMedications) {
         val now = Calendar.getInstance()
 
         DatePickerDialog(
@@ -118,48 +126,56 @@ class HistoryActivity : AppCompatActivity() {
                         cal.set(Calendar.MILLISECOND, 0)
 
                         val chosen = cal.timeInMillis
-                        val nowMillis = System.currentTimeMillis()
-                        if (chosen > nowMillis) {
+                        if (chosen > System.currentTimeMillis()) {
                             Toast.makeText(this, getString(R.string.future_time_not_allowed), Toast.LENGTH_SHORT).show()
                             return@TimePickerDialog
                         }
 
-                        lifecycleScope.launch {
-                            var saved = 0
-                            var skipped = 0
-                            for ((medId, medName) in selectedMeds) {
-                                val exists = dao.exists(medId, chosen)
-                                if (exists) {
-                                    skipped++
-                                } else {
-                                    dao.insert(
-                                        IntakeHistory(
-                                            medicationId = medId,
-                                            medicationName = medName,
-                                            takenAt = chosen,
-                                            createdAt = System.currentTimeMillis()
-                                        )
-                                    )
-                                    saved++
+                        lifecycleScope.launch(Dispatchers.IO) {
+                            val scheduleId = scheduleWithMeds.schedule.id
+                            val exists = dao.existsScheduleEntry(scheduleId, chosen)
+                            if (exists) {
+                                withContext(Dispatchers.Main) {
+                                    Toast.makeText(this@HistoryActivity, getString(R.string.duplicate_schedule_skipped), Toast.LENGTH_SHORT).show()
                                 }
+                                return@launch
                             }
-                            Toast.makeText(this@HistoryActivity, getString(R.string.history_saved, saved, skipped), Toast.LENGTH_SHORT).show()
 
-                            // refresh list
-                            onResume()
+                            val entries = scheduleWithMeds.medications.map {
+                                IntakeHistory(
+                                    scheduleId = scheduleId,
+                                    scheduleName = scheduleWithMeds.schedule.name,
+                                    medicationId = it.id,
+                                    medicationName = it.name,
+                                    takenAt = chosen,
+                                    createdAt = System.currentTimeMillis()
+                                )
+                            }
+                            dao.insertAll(entries)
 
-                            // notify widgets
-                            WidgetUtils.refreshHistoryWidgets(this@HistoryActivity)
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(
+                                    this@HistoryActivity,
+                                    getString(R.string.history_saved, entries.size, 0),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                onResume()
+                                WidgetUtils.refreshHistoryWidgets(this@HistoryActivity)
+                            }
                         }
                     },
                     now.get(Calendar.HOUR_OF_DAY),
                     now.get(Calendar.MINUTE),
                     true
-                ).apply { setTitle(getString(R.string.select_time)) }.show()
+                ).apply {
+                    setTitle(getString(R.string.select_time))
+                }.show()
             },
             now.get(Calendar.YEAR),
             now.get(Calendar.MONTH),
             now.get(Calendar.DAY_OF_MONTH)
-        ).apply { setTitle(getString(R.string.select_date)) }.show()
+        ).apply {
+            setTitle(getString(R.string.select_date))
+        }.show()
     }
 }

@@ -19,8 +19,10 @@ class MedicationWidgetProvider : AppWidgetProvider() {
 
     override fun onEnabled(context: Context) {
         super.onEnabled(context)
-        // Force refresh when the first instance is added
-        try { WidgetUtils.refreshMedicationWidgets(context) } catch (_: Exception) {}
+        try {
+            WidgetUtils.refreshMedicationWidgets(context)
+        } catch (_: Exception) {
+        }
     }
 
     override fun onAppWidgetOptionsChanged(
@@ -30,15 +32,16 @@ class MedicationWidgetProvider : AppWidgetProvider() {
         newOptions: Bundle
     ) {
         super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions)
-        // Force refresh on placement/resizing
-        try { appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetId, R.id.widget_list) } catch (_: Exception) {}
+        try {
+            appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetId, R.id.widget_list)
+        } catch (_: Exception) {
+        }
     }
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         appWidgetIds.forEach { appWidgetId ->
             val views = RemoteViews(context.packageName, R.layout.medication_widget)
 
-            // Set up the collection adapter
             val serviceIntent = Intent(context, MedicationWidgetService::class.java).apply {
                 putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
                 data = Uri.parse(toUri(Intent.URI_INTENT_SCHEME))
@@ -46,12 +49,10 @@ class MedicationWidgetProvider : AppWidgetProvider() {
             views.setRemoteAdapter(R.id.widget_list, serviceIntent)
             views.setEmptyView(R.id.widget_list, R.id.widget_empty)
 
-            // Set a pending intent template for item buttons
             val clickIntent = Intent(context, MedicationWidgetProvider::class.java).apply {
                 action = ACTION_TAKE_FROM_WIDGET
                 putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
             }
-            // Use MUTABLE so fill-in extras from collection items are merged
             val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
             val pendingTemplate = PendingIntent.getBroadcast(context, appWidgetId, clickIntent, flags)
             views.setPendingIntentTemplate(R.id.widget_list, pendingTemplate)
@@ -64,42 +65,35 @@ class MedicationWidgetProvider : AppWidgetProvider() {
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
         if (intent.action == ACTION_TAKE_FROM_WIDGET) {
-            val medId = intent.getIntExtra(EXTRA_MED_ID, -1)
-            val medName = intent.getStringExtra(EXTRA_MED_NAME) ?: ""
-            if (medId != -1) {
-                val pending = goAsync()
-                CoroutineScope(Dispatchers.IO).launch {
-                    try {
-                        val db = MedicationDatabase.getInstance(context)
-                        val now = System.currentTimeMillis()
-                        db.intakeHistoryDao().insert(
-                            IntakeHistory(
-                                medicationId = medId,
-                                medicationName = medName,
-                                takenAt = now,
-                                createdAt = now
-                            )
-                        )
-                        TakenStateStore.setDisabledForFiveMinutes(context, medId)
+            val scheduleId = intent.getIntExtra(EXTRA_SCHEDULE_ID, -1)
+            if (scheduleId == -1) return
+
+            val pending = goAsync()
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    val schedule = MedicationDatabase.getInstance(context).scheduleDao().getWithMedicationsById(scheduleId)
+                    if (schedule != null) {
+                        val result = ScheduleExecution.executeNow(context, schedule)
                         withContext(Dispatchers.Main) {
-                            Toast.makeText(context, context.getString(R.string.taken_recorded), Toast.LENGTH_SHORT).show()
+                            when {
+                                result.skippedDisabled -> Toast.makeText(context, context.getString(R.string.schedule_disabled_temporarily), Toast.LENGTH_SHORT).show()
+                                result.skippedDuplicate -> Toast.makeText(context, context.getString(R.string.duplicate_schedule_skipped), Toast.LENGTH_SHORT).show()
+                                else -> Toast.makeText(context, context.getString(R.string.taken_recorded_count, result.inserted), Toast.LENGTH_SHORT).show()
+                            }
                         }
-                    } catch (_: Exception) {
-                        // ignore
-                    } finally {
-                        // Refresh all widgets
-                        val awm = AppWidgetManager.getInstance(context)
-                        val cn = ComponentName(context, MedicationWidgetProvider::class.java)
-                        val ids = awm.getAppWidgetIds(cn)
-                        ids.forEach { id ->
-                            awm.notifyAppWidgetViewDataChanged(id, R.id.widget_list)
-                        }
-                        // Also refresh history widgets to reflect the new entry
-                        try {
-                            WidgetUtils.refreshHistoryWidgets(context)
-                        } catch (_: Exception) {}
-                        pending.finish()
                     }
+                } catch (_: Exception) {
+                    // ignore
+                } finally {
+                    val awm = AppWidgetManager.getInstance(context)
+                    val cn = ComponentName(context, MedicationWidgetProvider::class.java)
+                    val ids = awm.getAppWidgetIds(cn)
+                    ids.forEach { id -> awm.notifyAppWidgetViewDataChanged(id, R.id.widget_list) }
+                    try {
+                        WidgetUtils.refreshHistoryWidgets(context)
+                    } catch (_: Exception) {
+                    }
+                    pending.finish()
                 }
             }
         }
@@ -107,7 +101,6 @@ class MedicationWidgetProvider : AppWidgetProvider() {
 
     companion object {
         const val ACTION_TAKE_FROM_WIDGET = "com.example.preventforgettingmedicationandroidapp.ACTION_TAKE_FROM_WIDGET"
-        const val EXTRA_MED_ID = "extra_med_id"
-        const val EXTRA_MED_NAME = "extra_med_name"
+        const val EXTRA_SCHEDULE_ID = "extra_schedule_id"
     }
 }
