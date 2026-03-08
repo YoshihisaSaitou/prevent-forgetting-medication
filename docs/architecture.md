@@ -96,3 +96,13 @@
 
 
 
+
+## 9. テスト基盤方針（必須）
+品質戦略の実施手段として、以下のテストツールを必須とする。
+- JUnit
+- MockK
+- kotlinx-coroutines-test
+- AndroidX Test（core/runner/rules）
+- Espresso
+- Robolectric
+- Hilt Testing

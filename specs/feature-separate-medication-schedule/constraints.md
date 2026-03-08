@@ -23,3 +23,13 @@
 ## 5. ドキュメント制約
 - CN-13: 本機能の仕様変更は `docs/*` と `specs/feature-separate-medication-schedule/*` を同時更新する。
 - CN-14: 仕様駆動開発文書を `PreventForgettingMedicationAndroidApp` 配下に作成しない。
+
+## 6. テスト制約（必須）
+- CN-15: 本機能では以下テストツールの実施を必須とし、省略を禁止する。
+  - JUnit
+  - MockK
+  - kotlinx-coroutines-test
+  - AndroidX Test（core/runner/rules）
+  - Espresso
+  - Robolectric
+  - Hilt Testing

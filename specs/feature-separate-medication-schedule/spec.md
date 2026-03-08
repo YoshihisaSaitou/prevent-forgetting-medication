@@ -130,3 +130,13 @@
 
 
 
+
+## 12. テスト実施方針（必須）
+本機能の実装完了判定には、以下ツールでのテスト実施を必須とする。
+- JUnit
+- MockK
+- kotlinx-coroutines-test
+- AndroidX Test（core/runner/rules）
+- Espresso
+- Robolectric
+- Hilt Testing

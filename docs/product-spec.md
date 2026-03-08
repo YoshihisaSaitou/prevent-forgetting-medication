@@ -104,3 +104,13 @@
 
 
 
+
+## 9. テスト実施必須ツール
+本プロダクト仕様に基づく実装・検証では、以下のテストツールを必須で実施する。
+- JUnit
+- MockK
+- kotlinx-coroutines-test
+- AndroidX Test（core/runner/rules）
+- Espresso
+- Robolectric
+- Hilt Testing

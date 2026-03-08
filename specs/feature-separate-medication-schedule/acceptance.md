@@ -42,3 +42,10 @@
 ## 8. 非機能
 - AC-26: Android 7.0以上でクラッシュなく動作する。
 - AC-27: ネットワーク未接続でも主要機能（登録、実行、履歴、通知再構成）が動作する。
+
+## 9. テストツール実施（必須）
+- AC-28: JUnitで対象ユースケースの単体テストが実行される。
+- AC-29: MockK と kotlinx-coroutines-test を用いたユースケース/非同期処理テストが実行される。
+- AC-30: AndroidX Test（core/runner/rules）と EspressoでUI・画面遷移テストが実行される。
+- AC-31: Robolectric でJVM上のAndroid依存ロジックテストが実行される。
+- AC-32: Hilt Testing でDI前提のテストが実行される。

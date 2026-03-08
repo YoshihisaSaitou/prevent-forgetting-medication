@@ -70,3 +70,14 @@
 - ユーザーアカウント/認証
 - 医療機関システムとの連携
 - 服薬以外の健康ログ管理
+
+## 10. テスト実施必須要件
+- TR-1: 本機能の実装では以下のテストツールを必ず実施すること。
+  - JUnit
+  - MockK
+  - kotlinx-coroutines-test
+  - AndroidX Test（core/runner/rules）
+  - Espresso
+  - Robolectric
+  - Hilt Testing
+- TR-2: 上記ツールのいずれかを省略した場合、要件未達として扱う。

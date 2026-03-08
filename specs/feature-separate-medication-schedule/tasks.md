@@ -39,3 +39,11 @@
 - T5-2: ドキュメント更新（requirements/product-spec/architecture/glossary）整合確認
 - T5-3: 回帰確認（既存履歴、通知、削除フロー）
 - 完了条件: AC-23..AC-27を含む全ACが合格
+
+## Phase 6: テストツール必須実施
+- T6-1: JUnitによるドメインロジック単体テスト作成・実行
+- T6-2: MockK + kotlinx-coroutines-test による非同期ユースケーステスト作成・実行
+- T6-3: AndroidX Test（core/runner/rules）+ EspressoによるUIテスト作成・実行
+- T6-4: Robolectric によるJVM Android依存テスト作成・実行
+- T6-5: Hilt Testing を用いたDI連携テスト作成・実行
+- 完了条件: 指定7ツールの実行ログが確認できる
